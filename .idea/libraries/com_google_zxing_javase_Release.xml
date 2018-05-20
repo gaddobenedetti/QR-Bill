@@ -1,0 +1,12 @@
+<component name="libraryTable">
+  <library name="com.google.zxing:javase:Release" type="repository">
+    <properties maven-id="com.google.zxing:javase:RELEASE" />
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/com/google/zxing/javase/3.3.2/javase-3.3.2.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/google/zxing/core/3.3.2/core-3.3.2.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/beust/jcommander/1.72/jcommander-1.72.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>
