@@ -26,9 +26,7 @@ The test project consists of three classes:
 </ul>
 
 <h3>Dependancies</h3>
-For the test project, the <b>core</b> and <b>javase</b> ZXing libraries will need to be imported:
-
-Additionally the following directories of note and files are also included:
+For the test project, the <b>core</b> and <b>javase</b> ZXing libraries will need to be imported. Additionally the following directories of note and files are also included:
 <ul>
   <li> <b>qr_tests</b> A directory with three test QR test images, taken from the implementation guide. Note that the first actually contains an error in the alternative schema portion of the code.</li>
   <li> <b>qrbill_kreuz.png</b> A logo that is embedded in the QR bill and is required by the implementation guide. It can be found in the res directory.</li>
