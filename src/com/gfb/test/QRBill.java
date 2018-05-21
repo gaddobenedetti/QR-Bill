@@ -32,7 +32,8 @@ package com.gfb.test;
  * <P>This class was purposely written using only core Java and without any imports, so that it can
  * more easily adapted to other languages and platforms. As such it does not implement
  * {@link java.io.Serializable}, out of the box, but will do so if simply added. It is designed, not
- * only to serialize, but also to validate data according to the above standard.</P>
+ * only to serialize, but also to validate data according to the above standard. As a serialized object
+ * it can be checked as being valid using the {@link #isValid()}} method, before being invoked.</P>
  *
  * @author  Gaddo F Benedetti
  * @version 1.1
@@ -253,6 +254,23 @@ public class QRBill {
         if (error != null)
             throw new QRBillException(error);
         return code;
+    }
+
+    /**
+     * Validates the data in the QR object and returns whether it is correct or not according to
+     * the implimintation guide. This method can be used as an alternative to the {@link
+     * #getQRCode()} method to check validation before invoking the {@link #toString()} method
+     * for the code itself.
+     *
+     * @return Boolean. Whether the object contains a valid QR bill or not.
+     */
+    public boolean isValid() {
+        try {
+            getQRCode();
+            return true;
+        } catch (QRBillException e) {
+            return false;
+        }
     }
 
     /**
