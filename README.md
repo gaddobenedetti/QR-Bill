@@ -1,5 +1,7 @@
 # QRBill - Swiss Payments Code Serializer
 
+<img align="right" width="250" height="250" src="./res/qr_tests/Rechnung3.png">
+
 This QRBill class was designed to be a bare bones serializer for the Swiss Payments Code, which is meant to adapt the payment system in Switzerland and Liechtenstein to the international ISO 20022 standard. For more information on this please consult the <a href="http://www.paymentstandards.ch/">PaymentStandards.ch</a> site, as the <a href="https://www.paymentstandards.ch/dam/downloads/ig-qr-bill-en.pdf">implementation guide</a> here was the basis for this class.
 
 To note on this implementation is that the above guide contained an example which includes a number of errors in the alternative schema portion of the code. As a result the Main test class will fail on initial validation due to this error and a second Correction class was created to fix it and as a demonstration of how a QR Bill may be amended.
