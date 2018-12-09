@@ -21,7 +21,7 @@ package com.gfb.test;
 
 import java.io.File;
 
-public class Correct {
+public class Correct_v1 {
 
     /**
      * As the first example QR code includes a number of errors in the alternative schema portion of the code, this
@@ -38,9 +38,9 @@ public class Correct {
      */
 
     // The file path of the input QR Code file
-    private static final String     TEST_INVOICE    = "res/qr_tests/Rechnung1.png";
+    private static final String     TEST_INVOICE    = "res/qr_tests_v1/Invoice1.png";
     // The file path of the output QR Code file
-    private static final String     COPY_INVOICE    = "res/qr_tests/Rechnung1_new.png";
+    private static final String     COPY_INVOICE    = "res/qr_tests_v1/Invoice1_new.png";
     // The width & height of the output QR Code file
     private static final int        QR_LENGTH       = 300;
     // The corrected alternative schema
@@ -66,7 +66,7 @@ public class Correct {
                 invoice = Helper.serialize (responses[0], "Serialize Error", false);
             }
         } else {
-            invoice = Helper.generate ("File not found Error");
+            invoice = Helper.generate ("File not found Error", 1.0F);
         }
 
         if (invoice != null) {

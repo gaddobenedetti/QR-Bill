@@ -21,19 +21,21 @@ package com.gfb.test;
 
 import java.io.File;
 
-public class Main {
+public class Main_v1 {
 
     // The file path of the input QR Code file
-    private static final String     TEST_INVOICE    = "res/qr_tests/Rechnung#.png";
+    private static final String     TEST_INVOICE    = "res/qr_tests_v1/Invoice#.png";
     // The file path of the output QR Code file
-    private static final String     COPY_INVOICE    = "res/qr_tests/Rechnung#_new.png";
+    private static final String     COPY_INVOICE    = "res/qr_tests_v1/Invoice#_new.png";
     // Which of the three input files to be processed (1 - 3). If any other value is used,
     // all will be processed in turn.
-    private static final int        QR_INDEX        = 0;
+    private static final int        QR_INDEX        = 2;
     // The width & height of the output QR Code file
     private static final int        QR_LENGTH       = 300;
     // Whether the raw QR code is also printed after each reading
     private static final boolean    SHOW_OUTPUTCODE = false;
+    // The version of the QR code bill, if generated from data
+    private static final Float      QR_VERSION      = 1.0F;
 
     public static void main(String[] args) {
         
@@ -60,7 +62,7 @@ public class Main {
                     invoice = Helper.serialize (responses[0], "Serialize Error", SHOW_OUTPUTCODE);
                 }
             } else {
-                invoice = Helper.generate ("Failed to generate QR code");
+                invoice = Helper.generate ("Failed to generate QR code", QR_VERSION);
             }
 
             if (invoice != null) {

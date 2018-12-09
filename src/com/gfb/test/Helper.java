@@ -40,29 +40,17 @@ public class Helper {
         }
     }
 
-    public static QRBill generate (String errorTag) {
+    public static QRBill generate (String errorTag, Float version) {
         QRBill invoice = new QRBill();
-        invoice.setActor(
-                QRBill.ACTOR_CR,
-                "CR name",
-                "CR street",
-                "CR housenumber",
-                "CR postalcode",
-                "CR location",
-                "CH");
-        invoice.setActor(
-                QRBill.ACTOR_UDR,
-                "UDR name",
-                "UDR street",
-                "UDR housenumber",
-                "UDR postalcode",
-                "UDR location",
-                "CH");
+        invoice.setVersion(version);
+        invoice.setActor(QRBill.ACTOR_CR, "CR name", QRBill.ADDTYPE_STRUCTURED, "CR street", "CR housenumber", "CR postalcode", "CR location", "CH");
+        invoice.setActor(QRBill.ACTOR_UDR,"UDR name", QRBill.ADDTYPE_STRUCTURED, "UDR street", "UDR housenumber", "UDR postalcode", "UDR location", "CH");
         invoice.setAmount(299.95F);
-        invoice.setDueDate(2020, 2, 29);
         invoice.setIBAN("CH1234567890123456789");
         invoice.setCurrency(QRBill.CURRENCY_EUR);
         invoice.setAlternativeSchema("S1;Foobar1;Foobar2;Foobar3;Foobar4;Foobar5", 1);
+
+        invoice.setDueDate(2020, 2, 29);
 
         try {
             invoice.getQRCode();

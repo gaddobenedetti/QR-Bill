@@ -22,44 +22,44 @@ package com.gfb.test;
 /**
  * <h1>Swiss Payments Code Serializer</h1>
  *
- * <P>This class was designed to be a bare bones serializer for the Swiss Payments Code, which is
+ * <p>This class was designed to be a bare bones serializer for the Swiss Payments Code, which is
  * meant to adapt the payment system in Switzerland and Liechtenstein to the international ISO 20022
  * standard. For more information on this please consult the
- * {@link <a href="http://www.paymentstandards.ch/">PaymentStandards.ch</a>} site, as the
- * {@link <a href="https://www.paymentstandards.ch/dam/downloads/ig-qr-bill-en.pdf/">implementation
- * guide</a>} here was the basis for this class.</P>
+ * <a href="http://www.paymentstandards.ch/">PaymentStandards.ch</a> site, as the
+ * <a href="https://www.paymentstandards.ch/dam/downloads/ig-qr-bill-en.pdf">implementation
+ * guide</a> here was the basis for this class.</p>
  *
- * <P>This class was purposely written using only core Java and without any imports, so that it can
+ * <p>This class was purposely written using only core Java and without any imports, so that it can
  * more easily adapted to other languages and platforms. As such it does not implement
  * {@link java.io.Serializable}, out of the box, but will do so if simply added. It is designed, not
- * only to serialize, but also to validate data according to the above standard. As a serialized object
- * it can be checked as being valid using the {@link #isValid()}} method, before being invoked.</P>
+ * only to serialize, but also to validate data according to the above standard.</p>
  *
  * @author  Gaddo F Benedetti
- * @version 1.1
- * @since   2018-05-19
+ * @version 2.0
+ * @since   2018-12-09
  */
 
 public class QRBill {
 
     private boolean strict;
     private String qrType;
-    private String version;
+    private Float version;
     private int codingType;
-    private String konto;
-    private float betrag;
-    private String wahrung;
-    private String zahlbarBis;
-    private String referenztyp;
-    private String referenz;
-    private String zusInfo = "";
-    private String[] av = new String[] { "", ""};
+    private String account;
+    private float amount;
+    private String currency;
+    private String dueDate;
+    private String referenceType;
+    private String reference;
+    private String unstructuredMsg = "";
+    private String trailer;
+    private String billInfo = "";
+    private String[] as = new String[] { "", ""};
     private Actor[] actors = new Actor[] {
             new Actor(ACTOR_CR),
             new Actor(ACTOR_UCR),
             new Actor(ACTOR_UDR)
     };
-
 
     /**
      * QR Type Identifier: Swiss Payments Code
@@ -82,6 +82,14 @@ public class QRBill {
      */
     public static final int         ACTOR_UDR           = 2;
     /**
+     * Address Type: Structured
+     */
+    public static final String      ADDTYPE_STRUCTURED  = "S";
+    /**
+     * Address Type: Combined
+     */
+    public static final String      ADDTYPE_COMBINED    = "K";
+    /**
      * Currency: CHF - Swiss Francs
      */
     public static final String      CURRENCY_CHF       = "CHF";
@@ -101,9 +109,40 @@ public class QRBill {
      * Reference Type: None
      */
     public static final String      REFTYPE_NON         = "NON";
+    /**
+     * Trailer: End Payment Data (EPD)
+     */
+    public static final String      TRAILER_EPD         = "EPD";
 
 
-    private static final float      VERSION_SUPPORTED   = 1.00F;
+    private static final float      VERSION_SUPPORTED   = 2.00F;
+    
+    
+    private static enum Data {
+        NONE, QRTYPE, VERSION, CODING, ACCOUNT, AMOUNT, CURRENCY, DUEDATE, REF_TYPE, REF,
+        CR_ADDTYPE, CR_NAME, CR_ADDRESS1, CR_ADDRESS2, CR_POSTCODE, CR_LOCATION, CR_COUNTRY,
+        UCR_ADDTYPE, UCR_NAME, UCR_ADDRESS1, UCR_ADDRESS2, UCR_POSTCODE, UCR_LOCATION, UCR_COUNTRY,
+        UDR_ADDTYPE, UDR_NAME, UDR_ADDRESS1, UDR_ADDRESS2, UDR_POSTCODE, UDR_LOCATION, UDR_COUNTRY,
+        UNSTR_MSG, TRAILER, BILLINFO, ALTSCHEMA1, ALTSCHEMA2
+    }
+
+    private final Data[] version1 = {
+            Data.QRTYPE, Data.VERSION, Data.CODING, Data.ACCOUNT,
+            Data.CR_NAME, Data.CR_ADDRESS1, Data.CR_ADDRESS2, Data.CR_POSTCODE, Data.CR_LOCATION, Data.CR_COUNTRY,
+            Data.UCR_NAME, Data.UCR_ADDRESS1, Data.UCR_ADDRESS2, Data.UCR_POSTCODE, Data.UCR_LOCATION, Data.UCR_COUNTRY,
+            Data.AMOUNT, Data.CURRENCY, Data.DUEDATE,
+            Data.UDR_NAME, Data.UDR_ADDRESS1, Data.UDR_ADDRESS2, Data.UDR_POSTCODE, Data.UDR_LOCATION, Data.UDR_COUNTRY,
+            Data.REF_TYPE, Data.REF, Data.UNSTR_MSG, Data.ALTSCHEMA1, Data.ALTSCHEMA2
+    };
+
+    private final Data[] version2 = {
+            Data.QRTYPE, Data.VERSION, Data.CODING, Data.ACCOUNT,
+            Data.CR_ADDTYPE, Data.CR_NAME, Data.CR_ADDRESS1, Data.CR_ADDRESS2, Data.CR_POSTCODE, Data.CR_LOCATION, Data.CR_COUNTRY,
+            Data.UCR_ADDTYPE, Data.UCR_NAME, Data.UCR_ADDRESS1, Data.UCR_ADDRESS2, Data.UCR_POSTCODE, Data.UCR_LOCATION, Data.UCR_COUNTRY,
+            Data.AMOUNT, Data.CURRENCY,
+            Data.UDR_ADDTYPE, Data.UDR_NAME, Data.UDR_ADDRESS1, Data.UDR_ADDRESS2, Data.UDR_POSTCODE, Data.UDR_LOCATION, Data.UDR_COUNTRY,
+            Data.REF_TYPE, Data.REF, Data.UNSTR_MSG, Data.TRAILER, Data.BILLINFO, Data.ALTSCHEMA1, Data.ALTSCHEMA2
+    };
 
     /**
      * Constructor that generates a partially empty QR Billing object, calling for strict
@@ -115,7 +154,8 @@ public class QRBill {
      *     <li>Reference Type: {@link #REFTYPE_NON}</li>
      *     <li>Amount: None</li>
      *     <li>Currency: {@link #CURRENCY_CHF}</li>
-     * </ui>
+     *     <li>Trailer: {@link #TRAILER_EPD}</li>
+     * </ul>
      */
     public QRBill() {
         this(true);
@@ -131,12 +171,17 @@ public class QRBill {
      *     <li>Reference Type: {@link #REFTYPE_NON}</li>
      *     <li>Amount: None</li>
      *     <li>Currency: {@link #CURRENCY_CHF}</li>
-     * </ui>
+     *     <li>Trailer: {@link #TRAILER_EPD}</li>
+     * </ul>
+     *
+     * Please note that this constructor and the use of the #strict paramater will be deprecated
+     * in the future.
      *
      * @param strict Boolean. Whether validation should be strict or not. If set to false,
      *               various constraints, such as field length, are ignored, although validation
      *               will still occur.
      */
+    @Deprecated
     public QRBill(boolean strict) {
         this.strict = strict;
         setQrType(QRBill.QRTYPE_SPC);
@@ -147,6 +192,7 @@ public class QRBill {
         setReference();
         setAmount();
         setCurrency(QRBill.CURRENCY_CHF);
+        setTrailer(QRBill.TRAILER_EPD);
     }
 
     /**
@@ -190,53 +236,129 @@ public class QRBill {
      */
     @Override
     public String toString () {
+
+        Data[] structure = getStructure();
         StringBuffer out = new StringBuffer();
-        out.append(getQrType() + "\n");
-        out.append(getVersion() + "\n");
-        out.append(getCodingType() + "\n");
-        out.append(getIBAN() + "\n");
-
-        out.append(getActorName(QRBill.ACTOR_CR) + "\n");
-        out.append(getActorStreet(QRBill.ACTOR_CR) + "\n");
-        out.append(getActorHouseNumber(QRBill.ACTOR_CR) + "\n");
-        out.append(getActorPostcode(QRBill.ACTOR_CR) + "\n");
-        out.append(getActorLocation(QRBill.ACTOR_CR) + "\n");
-        out.append(getActorCountry(QRBill.ACTOR_CR) + "\n");
-
-        out.append(getActorName(QRBill.ACTOR_UCR) + "\n");
-        out.append(getActorStreet(QRBill.ACTOR_UCR) + "\n");
-        out.append(getActorHouseNumber(QRBill.ACTOR_UCR) + "\n");
-        out.append(getActorPostcode(QRBill.ACTOR_UCR) + "\n");
-        out.append(getActorLocation(QRBill.ACTOR_UCR) + "\n");
-        out.append(getActorCountry(QRBill.ACTOR_UCR) + "\n");
-
-        if (getAmount() > 0)
-            out.append(formatAmountAsString(getAmount()));
-        out.append("\n");
-
-        out.append(getCurrency() + "\n");
-        int[] dueDate = getDueDate();
-        if (dueDate == null) {
-            out.append("\n");
-        } else {
-            out.append(dueDate[0] + "-" + dueDate[1] + "-" + dueDate[2] + "\n");
+        if (structure != null) {
+            for (Data element : structure) {
+                switch (element) {
+                    case QRTYPE:
+                        out.append(getQrType() + "\n");
+                        break;
+                    case VERSION:
+                        out.append(getFormattedVersion() + "\n");
+                        break;
+                    case CODING:
+                        out.append(getCodingType() + "\n");
+                        break;
+                    case ACCOUNT:
+                        out.append(getIBAN() + "\n");
+                        break;
+                    case AMOUNT:
+                        if (getAmount() > 0)
+                            out.append(formatAmountAsString(getAmount()));
+                        out.append("\n");
+                        break;
+                    case CURRENCY:
+                        out.append(getCurrency() + "\n");
+                        break;
+                    case DUEDATE:
+                        int[] dueDate = getDueDate();
+                        if (dueDate == null) {
+                            out.append("\n");
+                        } else {
+                            out.append(dueDate[0] + "-" + dueDate[1] + "-" + dueDate[2] + "\n");
+                        }
+                        break;
+                    case REF_TYPE:
+                        out.append(getReferenceType() + "\n");
+                        break;
+                    case REF:
+                        out.append(getReference() + "\n");
+                        break;
+                    case CR_ADDTYPE:
+                        out.append(getActorAddressType(QRBill.ACTOR_CR) + "\n");
+                        break;
+                    case CR_NAME:
+                        out.append(getActorName(QRBill.ACTOR_CR) + "\n");
+                        break;
+                    case CR_ADDRESS1:
+                        out.append(getActorStreet(QRBill.ACTOR_CR) + "\n");
+                        break;
+                    case CR_ADDRESS2:
+                        out.append(getActorHouseNumber(QRBill.ACTOR_CR) + "\n");
+                        break;
+                    case CR_POSTCODE:
+                        out.append(getActorPostcode(QRBill.ACTOR_CR) + "\n");
+                        break;
+                    case CR_LOCATION:
+                        out.append(getActorLocation(QRBill.ACTOR_CR) + "\n");
+                        break;
+                    case CR_COUNTRY:
+                        out.append(getActorCountry(QRBill.ACTOR_CR) + "\n");
+                        break;
+                    case UCR_ADDTYPE:
+                        out.append(getActorAddressType(QRBill.ACTOR_UCR) + "\n");
+                        break;
+                    case UCR_NAME:
+                        out.append(getActorName(QRBill.ACTOR_UCR) + "\n");
+                        break;
+                    case UCR_ADDRESS1:
+                        out.append(getActorStreet(QRBill.ACTOR_UCR) + "\n");
+                        break;
+                    case UCR_ADDRESS2:
+                        out.append(getActorHouseNumber(QRBill.ACTOR_UCR) + "\n");
+                        break;
+                    case UCR_POSTCODE:
+                        out.append(getActorPostcode(QRBill.ACTOR_UCR) + "\n");
+                        break;
+                    case UCR_LOCATION:
+                        out.append(getActorLocation(QRBill.ACTOR_UCR) + "\n");
+                        break;
+                    case UCR_COUNTRY:
+                        out.append(getActorCountry(QRBill.ACTOR_UCR) + "\n");
+                        break;
+                    case UDR_ADDTYPE:
+                        out.append(getActorAddressType(QRBill.ACTOR_UDR) + "\n");
+                        break;
+                    case UDR_NAME:
+                        out.append(getActorName(QRBill.ACTOR_UDR) + "\n");
+                        break;
+                    case UDR_ADDRESS1:
+                        out.append(getActorStreet(QRBill.ACTOR_UDR) + "\n");
+                        break;
+                    case UDR_ADDRESS2:
+                        out.append(getActorHouseNumber(QRBill.ACTOR_UDR) + "\n");
+                        break;
+                    case UDR_POSTCODE:
+                        out.append(getActorPostcode(QRBill.ACTOR_UDR) + "\n");
+                        break;
+                    case UDR_LOCATION:
+                        out.append(getActorLocation(QRBill.ACTOR_UDR) + "\n");
+                        break;
+                    case UDR_COUNTRY:
+                        out.append(getActorCountry(QRBill.ACTOR_UDR) + "\n");
+                        break;
+                    case UNSTR_MSG:
+                        out.append((getUnstructuredMsg() != null ? getUnstructuredMsg() : "") + "\n");
+                        break;
+                    case ALTSCHEMA1:
+                        String[] as1 = getAlternativeSchema(-1);
+                        out.append(as1[0] + "\n");
+                        break;
+                    case ALTSCHEMA2:
+                        String[] as2 = getAlternativeSchema(-1);
+                        out.append(as2[1] + "\n");
+                        break;
+                    case TRAILER:
+                        out.append(getTrailer() + "\n");
+                        break;
+                    case BILLINFO:
+                        out.append(getBillInfo() + "\n");
+                        break;
+                }
+            }
         }
-
-        out.append(getActorName(QRBill.ACTOR_UDR) + "\n");
-        out.append(getActorStreet(QRBill.ACTOR_UDR) + "\n");
-        out.append(getActorHouseNumber(QRBill.ACTOR_UDR) + "\n");
-        out.append(getActorPostcode(QRBill.ACTOR_UDR) + "\n");
-        out.append(getActorLocation(QRBill.ACTOR_UDR) + "\n");
-        out.append(getActorCountry(QRBill.ACTOR_UDR) + "\n");
-
-        out.append(getReferenceType() + "\n");
-        out.append(getReference() + "\n");
-        out.append((getAdditionalInfo() != null ? getAdditionalInfo() : "") + "\n");
-
-        String[] av = getAlternativeSchema(-1);
-        out.append(av[0] + "\n");
-        out.append(av[1]);
-
         return out.toString().trim();
     }
 
@@ -250,27 +372,10 @@ public class QRBill {
      */
     public String getQRCode() throws QRBillException {
         String code = toString();
-        String error = validateData (code, strict);
+        String error = validateData (code, this.strict);
         if (error != null)
             throw new QRBillException(error);
         return code;
-    }
-
-    /**
-     * Validates the data in the QR object and returns whether it is correct or not according to
-     * the implimintation guide. This method can be used as an alternative to the {@link
-     * #getQRCode()} method to check validation before invoking the {@link #toString()} method
-     * for the code itself.
-     *
-     * @return Boolean. Whether the object contains a valid QR bill or not.
-     */
-    public boolean isValid() {
-        try {
-            getQRCode();
-            return true;
-        } catch (QRBillException e) {
-            return false;
-        }
     }
 
     /**
@@ -287,7 +392,14 @@ public class QRBill {
      * zeros. The first two represent the major version, the second two represent the minor
      * version (e.g. "0100" corresponds to version 1.0).
      */
-    public String getVersion () { return this.version; }
+    public Float getVersion () { return this.version; }
+
+    public String getFormattedVersion () {
+        String fv = String.valueOf((int) (this.version * 100));
+        if (fv.length() < 4)
+            fv = "0" + fv;
+        return fv;
+    }
 
     /**
      * Gets the Character Set used.
@@ -301,7 +413,7 @@ public class QRBill {
      *
      * @return String. The IBAN.
      */
-    public String getIBAN () { return this.konto; }
+    public String getIBAN () { return this.account; }
 
     /**
      * Gets the amount payable.
@@ -309,7 +421,7 @@ public class QRBill {
      * @return Float. Returns the amount payable as a float, accurate to two decimal places. If a
      * value of -1 is returned then there is no amount payable registered.
      */
-    public float getAmount () { return this.betrag; }
+    public float getAmount () { return this.amount; }
 
     /**
      * Gets the currency.
@@ -317,7 +429,7 @@ public class QRBill {
      * @return String. Returns the currency of the amount payable. Possible values:
      * {@link #CURRENCY_CHF}, {@link #CURRENCY_EUR}
      */
-    public String getCurrency () { return this.wahrung; }
+    public String getCurrency () { return this.currency; }
 
     /**
      * Gets the reference type. Note that if this is {@link #REFTYPE_NON}, the value for reference
@@ -326,21 +438,25 @@ public class QRBill {
      * @return String. Returns the reference type. Possible values: {@link #REFTYPE_QRR},
      * {@link #REFTYPE_SCOR}, {@link #REFTYPE_NON}.
      */
-    public String getReferenceType () { return this.referenztyp; }
+    public String getReferenceType () { return this.referenceType; }
 
     /** Gets the bill reference. Note that if the value for reference type is {@link #REFTYPE_NON},
      * the value for this will be blank.
      *
      * @return tring. Returns the reference. This can be up to 27 characters long or blank.
      */
-    public String getReference () { return this.referenz; }
+    public String getReference () { return this.reference; }
 
     /**
-     * Gets any additional information.
+     * Gets any additional information. Deprecated - use getUnstructuredMsg instead.
+     *
+     * This method is a copy of the #getUnstructuredMsg method, which uses the same termenology
+     * used from version 2.0 of the specification. As such it will be deprecated in the future.
      *
      * @return String. The additional bill information.
      */
-    public String getAdditionalInfo () { return this.zusInfo; }
+    @Deprecated
+    public String getAdditionalInfo () { return getUnstructuredMsg(); }
 
     /**
      * Gets the name of the specified actor.
@@ -354,6 +470,17 @@ public class QRBill {
     public String getActorName (int actorType) { return this.actors[actorType].name; }
 
     /**
+     * Gets the address type of the specified actor.
+     *
+     * @param actorType actorType Integer. The actor type being queried. Possible values:
+     * {@link #ACTOR_CR}, {@link #ACTOR_UCR}, {@link #ACTOR_UDR}.
+     *
+     * @return String. The actor address type. Possible values: {@link #ADDTYPE_STRUCTURED},
+     * {@link #ADDTYPE_COMBINED}.
+     */
+    public String getActorAddressType (int actorType) { return this.actors[actorType].addressType; }
+
+    /**
      * Gets the street address of the specified actor.
      *
      * @param actorType Integer. The actor type being queried. Possible values: {@link #ACTOR_CR},
@@ -362,7 +489,7 @@ public class QRBill {
      * @return String. The actor street address, as a string, blank if not mandatory and null when
      * mandatory, but omitted.
      */
-    public String getActorStreet (int actorType) { return this.actors[actorType].strasse; }
+    public String getActorStreet (int actorType) { return this.actors[actorType].address1; }
 
     /**
      * Gets the house number of the specified actor.
@@ -373,7 +500,7 @@ public class QRBill {
      * @return String. The actor house number, as a string, blank if not mandatory and null when
      * mandatory, but omitted.
      */
-    public String getActorHouseNumber (int actorType) { return this.actors[actorType].hausnummer; }
+    public String getActorHouseNumber (int actorType) { return this.actors[actorType].address2; }
 
     /**
      * Gets the postcode of the specified actor.
@@ -384,7 +511,7 @@ public class QRBill {
      * @return String. The actor postcode, as a string, blank if not mandatory and null when
      * mandatory, but omitted.
      */
-    public String getActorPostcode (int actorType) { return this.actors[actorType].postleitzahl; }
+    public String getActorPostcode (int actorType) { return this.actors[actorType].postcode; }
 
     /**
      * Gets the location (town, city, etc) of the specified actor.
@@ -395,7 +522,7 @@ public class QRBill {
      * @return String. The actor location, as a string, blank if not mandatory and null when
      * mandatory, but omitted.
      */
-    public String getActorLocation (int actorType) { return this.actors[actorType].ort; }
+    public String getActorLocation (int actorType) { return this.actors[actorType].location; }
 
     /**
      * Gets the country of the specified actor.
@@ -406,7 +533,29 @@ public class QRBill {
      * @return String. The actor country, as a string, blank if not mandatory and null when
      * mandatory, but omitted.
      */
-    public String getActorCountry (int actorType) { return this.actors[actorType].land; }
+    public String getActorCountry (int actorType) { return this.actors[actorType].country; }
+
+    /**
+     * Gets any unstructured message included.
+     *
+     * @return String. The unstructured message.
+     */
+    public String getUnstructuredMsg() { return this.unstructuredMsg; }
+
+    /**
+     * Gets the Trailer, which is the unambiguous indicator for the end of payment data.
+     *
+     * @return String. Possible values: {@link #TRAILER_EPD}.
+     */
+    public String getTrailer() { return this.trailer; }
+
+    /**
+     * Gets the bill information which can be used as coded information for automated
+     * booking of the payment.
+     *
+     * @return String. The bill information.
+     */
+    public String getBillInfo() { return this.billInfo; }
 
     /**
      * Gets all Alternative Schemas.
@@ -432,14 +581,14 @@ public class QRBill {
      */
     public String[] getAlternativeSchema (int index) {
         if (index > 1 || index < 0) {
-            return this.av;
+            return this.as;
         } else {
-            if (this.av[index] == null || this.av[index].length() < 3) {
+            if (this.as[index] == null || this.as[index].length() < 3) {
                 return null;
             } else {
-                String token = this.av[index].substring(0, 2);
-                String del = String.valueOf(this.av[index].charAt(2));
-                String[] data = this.av[index].substring(3).split(del);
+                String token = this.as[index].substring(0, 2);
+                String del = String.valueOf(this.as[index].charAt(2));
+                String[] data = this.as[index].substring(3).split(del);
                 String[] retArray = new String[data.length + 2];
                 retArray[0] = token;
                 retArray[1] = del;
@@ -457,10 +606,10 @@ public class QRBill {
      * no value is available, null is returned.
      */
     public int[] getDueDate () {
-        if (this.zahlbarBis == null || this.zahlbarBis.length() == 0) {
+        if (this.dueDate == null || this.dueDate.length() == 0) {
             return null;
         } else {
-            String[] tempDate = this.zahlbarBis.split("-");
+            String[] tempDate = this.dueDate.split("-");
             if (tempDate.length != 3) {
                 return null;
             } else {
@@ -493,7 +642,8 @@ public class QRBill {
     }
 
     /**
-     * Sets the QR Bill version number. Required for a valid QR Bill.
+     * Sets the QR Bill version number directly from an input of a 4-character numerical string, as
+     * described in the specification. Required for a valid QR Bill.
      *
      * @param version String. The QR Bill version number as a 4-character numerical string, with
      *                leading zeros. The first two represent the major version, the second two
@@ -506,16 +656,28 @@ public class QRBill {
             return false;
         } else {
             try {
-                int v = Integer.parseInt(version);
-                if (v <= (int) QRBill.VERSION_SUPPORTED * 100) {
-                    this.version = version;
-                    return true;
-                } else {
-                    return false;
-                }
+                Float v = Float.parseFloat(version) / 100;
+                return setVersion(v);
             } catch (NumberFormatException e) {
                 return false;
             }
+        }
+    }
+
+    /**
+     * Sets the QR Bill version number directly from an float input, as Required for a valid
+     * QR Bill.
+     *
+     * @param version Float. The QR Bill version number as a float.
+     *
+     * @return Boolean. Whether the value has validated and stored correctly or not.
+     */
+    public boolean setVersion (Float version) {
+        if (version <= QRBill.VERSION_SUPPORTED) {
+            this.version = version;
+            return true;
+        } else {
+            return false;
         }
     }
 
@@ -553,13 +715,13 @@ public class QRBill {
         for (int i = 0; i < iban.length(); i++)
             if ("1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ".indexOf(iban.toUpperCase().charAt(i)) == -1)
                 return false;
-        this.konto = validateStr(iban, true, 21);
-        if (this.konto == null) {
+        this.account = validateStr(iban, true, 21);
+        if (this.account == null) {
             return false;
         } else {
-            if (this.konto.toUpperCase().startsWith("CH")) {
+            if (this.account.toUpperCase().startsWith("CH")) {
                 return true;
-            } else if (this.konto.toUpperCase().startsWith("LI")) {
+            } else if (this.account.toUpperCase().startsWith("LI")) {
                 return true;
             } else {
                 return false;
@@ -586,11 +748,11 @@ public class QRBill {
      */
     public boolean setAmount (float amt) {
         if (amt < 0) {
-            this.betrag = -1;
+            this.amount = -1;
             return true;
         } else {
             String amount = formatAmountAsString(amt);
-            this.betrag = Float.parseFloat(amount);
+            this.amount = Float.parseFloat(amount);
             if (amount.length() > 12) {
                 return false;
             } else {
@@ -617,7 +779,7 @@ public class QRBill {
                     valid = true;
             }
             if (valid)
-                this.wahrung = currency.toUpperCase();
+                this.currency = currency.toUpperCase();
             return valid;
         }
     }
@@ -652,11 +814,11 @@ public class QRBill {
         }
 
         if (isValid) {
-            this.zahlbarBis = year + "-"
+            this.dueDate = year + "-"
                     + ("00" + String.valueOf(month)).substring(String.valueOf(month).length())
                     + "-" + ("00" + String.valueOf(day)).substring(String.valueOf(day).length());
         } else {
-            this.zahlbarBis = "";
+            this.dueDate = "";
         }
         return true;
     }
@@ -690,24 +852,24 @@ public class QRBill {
                 valid = true;
         }
         if (valid)
-            this.referenztyp = refType.toUpperCase();
+            this.referenceType = refType.toUpperCase();
 
         if (ref != null)
             ref = ref.replace(" ","").trim();
         switch (refType) {
             case QRBill.REFTYPE_QRR:
-                this.referenz = validateStr(ref, true, 27);
+                this.reference = validateStr(ref, true, 27);
                 // TODO May want to improve validation with recursive digit check after modular 10 (27th digit of the reference).
-                if (this.referenz == null)
+                if (this.reference == null)
                     valid = false;
                 break;
             case QRBill.REFTYPE_SCOR:
-                this.referenz = validateStr(ref, true, 25);
-                if (this.referenz == null)
+                this.reference = validateStr(ref, true, 25);
+                if (this.reference == null)
                     valid = false;
                 break;
             case QRBill.REFTYPE_NON:
-                this.referenz = "";
+                this.reference = "";
                 break;
             default:
                 valid = false;
@@ -717,15 +879,68 @@ public class QRBill {
     }
 
     /**
-     * Sets the additional information field.
+     * Sets the additional information field. Deprecated - use getUnstructuredMsg instead.
+     *
+     * This method is a copy of the #setUnstructuredMsg method, which uses the same termenology
+     * used from version 2.0 of the specification. As such it will be deprecated in the future.
      *
      * @param info String. The text of the additional information. Maximum length of 140 characters.
      *
      * @return Boolean. Whether the value has validated and stored correctly or not.
      */
+    @Deprecated
     public boolean setAdditionalInfo(String info) {
-        this.zusInfo = validateStr(info, false, 140);
-        return true;
+        return setUnstructuredMsg(info);
+    }
+
+    /**
+     * Sets an unstructured message.
+     *
+     * @param unstructuredMsg String. The text of the unstructured message. Maximum length of 140 characters.
+     *
+     * @return Boolean. Whether the value has validated and stored correctly or not.
+     */
+    public boolean setUnstructuredMsg(String unstructuredMsg) {
+        this.unstructuredMsg = validateStr(unstructuredMsg, false, 140);
+        return unstructuredMsg.length() > 140;
+    }
+
+    /**
+     * Unambiguous indicator for the end of payment data. Fixed value "EPD" (End Payment Data), so
+     * the method realistically does not allow anything other than that value at present.
+     *
+     * @param trailer String. Only poaaible value, currently, is {@link #TRAILER_EPD}.
+     *
+     * @return Whether the value has validated and stored correctly or not.
+     */
+    public boolean setTrailer(String trailer) {
+        if (trailer == null)
+            return false;
+        trailer = trailer.toUpperCase().trim();
+        if (trailer.length() != 3)
+            return false;
+
+        switch (trailer) {
+            case TRAILER_EPD:
+                this.trailer = trailer;
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    /**
+     * Coded information for automated booking of the payment. The format of this information is not
+     * part of the standardization, but reccomendations on this may be found in annex E of the
+     * implementation guidelines. Only string length is checked in this implementation.
+     *
+     * @param billInfo String. The text of the billing information. Maximum length of 140 characters.
+     *
+     * @return Whether the value has validated and stored correctly or not.
+     */
+    public boolean setBillInfo(String billInfo) {
+        this.billInfo = validateStr(billInfo, false, 140);
+        return billInfo.length() > 140;
     }
 
     /**
@@ -745,7 +960,7 @@ public class QRBill {
      *     <li>
      *         Each alternate schemas entry may be up to 100 characters in length.
      *     </li>
-     * </ui>
+     * </ul>
      *
      * @param data String. The alternative schema data as two entries. Maximum length of each entry
      *            is 100 characters, no maximum length is specified for the second. If null the entry
@@ -756,9 +971,9 @@ public class QRBill {
      */
     public boolean setAlternativeSchema(String data, int index) {
         if (data == null || index < 0 || index > 1) {
-            this.av[index] = "";
+            this.as[index] = "";
         } else {
-            this.av[index] = validateStr(data, false, 100);
+            this.as[index] = validateStr(data, false, 100);
         }
         return true;
     }
@@ -780,9 +995,9 @@ public class QRBill {
      *     <li>
      *         Each alternate schemas entry may be up to 100 characters in length.
      *     </li>
-     * </ui>
+     * </ul>
      *
-     * @param data data String Array. The alternative schema data as an array. Maximum length of each entry
+     * @param data String Array. The alternative schema data as an array. Maximum length of each entry
      *            is 100 characters, no maximum length is specified for the second. If the array only contains
      *             one element then this is assigned as the first and the second is cleared. If the array
      *             contains more than two elements then all elements after the second are ignored. If null all
@@ -792,8 +1007,8 @@ public class QRBill {
      */
     public boolean setAlternativeSchema(String[] data) {
         if (data == null) {
-            this.av[0] = "";
-            this.av[1] = "";
+            this.as[0] = "";
+            this.as[1] = "";
         } else for (int i = 0; i < data.length; i++) {
             setAlternativeSchema(data[i], i);
         }
@@ -813,6 +1028,8 @@ public class QRBill {
      * Sets an actor associated with the QR Bill. An actor is one of several legal entities affected
      * by the QR Bill, namely the creditor, ultimate creditor or ultimate debtor.
      *
+     * This method is complient with the version 1.0 of the specification.
+     *
      * @param typeId Integer. The actor type. Possible values:
      *               {@link #ACTOR_CR}, {@link #ACTOR_UCR}, {@link #ACTOR_UDR}
      * @param name String. Mandatory. Maximum length of 70 characters. The actor full name.
@@ -827,15 +1044,42 @@ public class QRBill {
      * @return Boolean. Whether the value has validated and stored correctly or not.
      */
     public boolean setActor(int typeId, String name, String street, String housenumber, String postalcode, String location, String country) {
+        return setActor(typeId, name, null, street, housenumber, postalcode, location, country);
+    }
+
+    /**
+     * Sets an actor associated with the QR Bill. An actor is one of several legal entities affected
+     * by the QR Bill, namely the creditor, ultimate creditor or ultimate debtor.
+     *
+     * This method is complient with the versions 1.0 to 2.0 of the specification.
+     *
+     * @param typeId Integer. The actor type. Possible values:
+     *               {@link #ACTOR_CR}, {@link #ACTOR_UCR}, {@link #ACTOR_UDR}
+     * @param name String. Mandatory. Maximum length of 70 characters. The actor full name.
+     * @param addressType String. Mandatory. The format used for the actor address.
+     * @param address1 String. Dependant. Maximum length of 70 characters. The optional actor street address
+     *                 or mandatory actor street address and house number, depending on version and Address Type.
+     * @param address2 String. Dependant. Maximum length of 16 characters. The actor optional house
+     *                 number ot mandatory actor post code and location, depending on version and Address Type.
+     * @param postalcode String. Optional. Maximum length of 16 characters. The actor post code.
+     * @param location String. Dependant. Maximum length of 35 characters. The actor location,
+     *                 such as town or city. Not manditory if the address type is consolidated.
+     * @param country  String. Mandatory. Maximum length of 2 characters. The actor country, given
+     *                 as a 2-letter country code (ISO 3166-1).
+     *
+     * @return Boolean. Whether the value has validated and stored correctly or not.
+     */
+    public boolean setActor(int typeId, String name, String addressType, String address1, String address2, String postalcode, String location, String country) {
         if (typeId != QRBill.ACTOR_CR && typeId != QRBill.ACTOR_UCR && typeId != QRBill.ACTOR_UDR) {
             return false;
         } else {
             this.actors[typeId].name = validateStr(name, true, 70);
-            this.actors[typeId].strasse = validateStr(street, false, 70);
-            this.actors[typeId].hausnummer = validateStr(housenumber, false, 16);
-            this.actors[typeId].postleitzahl = validateStr(postalcode, true, 16);
-            this.actors[typeId].ort = validateStr(location, true, 35);
-            this.actors[typeId].land = validateStr(country, true, 2);
+            this.actors[typeId].addressType = validateStr(addressType, this.version >= 2.0F, 1);
+            this.actors[typeId].address1 = validateStr(address1, false, 70);
+            this.actors[typeId].address2 = validateStr(address2, false, 16);
+            this.actors[typeId].postcode = validateStr(postalcode, true, 16);
+            this.actors[typeId].location = validateStr(location, true, 35);
+            this.actors[typeId].country = validateStr(country, true, 2);
 
             return validateDependancies(typeId, this.strict);
         }
@@ -849,121 +1093,140 @@ public class QRBill {
             return "Input data exceeds maximum allowed limit.";
 
         String[] qrData = rawData.trim().split("\n");
-        if (qrData.length < 25) {
+        if (qrData.length < 25)
             return "Malformed Data - insufficient fields.";
-        } else if (!setVersion(qrData[1]) && strict) {
+
+        if (!setVersion(qrData[1]) && strict)
             return "Version invalid or not supported";
-        }
 
         this.actors[0] = new Actor(QRBill.ACTOR_CR);
         this.actors[1] = new Actor(QRBill.ACTOR_UCR);
         this.actors[2] = new Actor(QRBill.ACTOR_UDR);
+        Data[] structure = getStructure();
         String refType = QRBill.REFTYPE_NON;
-        int[] actorIds;
+        Data[] actorIds;
 
         for (int i = 0; i < qrData.length; i++) {
             String item = qrData[i];
-            switch (i) {
-                case 0: // QRType
+            Data key = structure.length > i ? structure[i] : Data.NONE;
+            switch (key) {
+                case NONE:
+                case VERSION:
+                    // Ignore
+                    break;
+                case QRTYPE:
                     if (!setQrType(item) && strict)
                         return "QR Type invalid or not supported";
                     break;
-                case 1: // Version
-                    // Ignore - already validated above
-                    break;
-                case 2: // Coding Type
+                case CODING: // Coding Type
                     if (!setCodingType(item) && strict)
                         return "Valid Coding type Missing";
                     break;
-                case 3: // Konto
+                case ACCOUNT: // Konto
                     if (!setIBAN(item) && strict)
                         return "Valid IBAN Missing";
                     break;
-                case 4: // ZE – Name
-                case 10: // EZE – Name
-                case 19: // EZP – Name
-                    actorIds = new int[] {4, 10, 19};
+                case CR_NAME:
+                case UCR_NAME:
+                case UDR_NAME:
+                    actorIds = new Data[] {Data.CR_NAME, Data.UCR_NAME, Data.UDR_NAME};
                     for (int j = 0; j < actorIds.length; j++) {
-                        if (actorIds[j] == i) {
+                        if (actorIds[j] == key) {
                             this.actors[j].name = validateStr(item, true, 70);
                         }
                     }
                     break;
-                case 5: // ZE – Strasse
-                case 11: // EZE – Strasse
-                case 20: // EZP – Strasse
-                    actorIds = new int[] {5, 11, 20};
+                case CR_ADDRESS1:
+                case UCR_ADDRESS1:
+                case UDR_ADDRESS1:
+                    actorIds = new Data[] {Data.CR_ADDRESS1, Data.UCR_ADDRESS1, Data.UDR_ADDRESS1};
                     for (int j = 0; j < actorIds.length; j++) {
-                        if (actorIds[j] == i) {
-                            this.actors[j].strasse = validateStr(item, false, 70);
+                        if (actorIds[j] == key) {
+                            this.actors[j].address1 = validateStr(item, false, 70);
                         }
                     }
                     break;
-                case 6: // ZE – Hausnummer
-                case 12: // EZE – Hausnummer
-                case 21: // EZP – Hausnummer
-                    actorIds = new int[] {6, 12, 21};
+                case CR_ADDRESS2:
+                case UCR_ADDRESS2:
+                case UDR_ADDRESS2:
+                    actorIds = new Data[] {Data.CR_ADDRESS2, Data.UCR_ADDRESS2, Data.UDR_ADDRESS2};
                     for (int j = 0; j < actorIds.length; j++) {
-                        if (actorIds[j] == i) {
-                            this.actors[j].hausnummer = validateStr(item, false, 16);
+                        if (actorIds[j] == key) {
+                            this.actors[j].address2 = validateStr(item, false, 16);
                         }
                     }
                     break;
-                case 7: // ZE – Postleitzahl
-                case 13: // EZE – Postleitzahl
-                case 22: // EZP – Postleitzahl
-                    actorIds = new int[] {7, 13, 22};
+                case CR_POSTCODE:
+                case UCR_POSTCODE:
+                case UDR_POSTCODE:
+                    actorIds = new Data[] {Data.CR_POSTCODE, Data.UCR_POSTCODE, Data.UDR_POSTCODE};
                     for (int j = 0; j < actorIds.length; j++) {
-                        if (actorIds[j] == i) {
-                            this.actors[j].postleitzahl = validateStr(item, true, 16);
+                        if (actorIds[j] == key) {
+                            this.actors[j].postcode = validateStr(item, true, 16);
                         }
                     }
                     break;
-                case 8: // ZE – Ort
-                case 14: // EZE – Ort
-                case 23: // EZP – Ort
-                    actorIds = new int[] {8, 14, 23};
+                case CR_LOCATION:
+                case UCR_LOCATION:
+                case UDR_LOCATION:
+                    actorIds = new Data[] {Data.CR_LOCATION, Data.UCR_LOCATION, Data.UDR_LOCATION};
                     for (int j = 0; j < actorIds.length; j++) {
-                        if (actorIds[j] == i) {
-                            this.actors[j].ort = validateStr(item, true, 35);
+                        if (actorIds[j] == key) {
+                            this.actors[j].location = validateStr(item, true, 35);
                         }
                     }
                     break;
-                case 9: // ZE – Land
-                case 15: // EZE – Land
-                case 24: // EZP – Land
-                    actorIds = new int[] {9, 15, 24};
+                case CR_COUNTRY:
+                case UCR_COUNTRY:
+                case UDR_COUNTRY:
+                    actorIds = new Data[] {Data.CR_COUNTRY, Data.UCR_COUNTRY, Data.UDR_COUNTRY};
                     for (int j = 0; j < actorIds.length; j++) {
-                        if (actorIds[j] == i) {
-                            this.actors[j].land = validateStr(item.toUpperCase(), true, 2);
+                        if (actorIds[j] == key) {
+                            this.actors[j].country = validateStr(item.toUpperCase(), true, 2);
                         }
                     }
                     break;
-                case 16: // Betrag
+                case CR_ADDTYPE:
+                case UCR_ADDTYPE:
+                case UDR_ADDTYPE:
+                    actorIds = new Data[] {Data.CR_ADDTYPE, Data.UCR_ADDTYPE, Data.UDR_ADDTYPE};
+                    for (int j = 0; j < actorIds.length; j++) {
+                        if (actorIds[j] == key) {
+                            this.actors[j].addressType = validateStr(item.toUpperCase(), this.version >= 2.0F, 1);
+                        }
+                    }
+                    break;
+                case AMOUNT:
                     setAmount(item);
                     break;
-                case 17: // Währung
+                case CURRENCY:
                     if (!setCurrency(item) && strict)
                         return "Valid Currency Missing";
                     break;
-                case 18: // Zahlbar bis
+                case DUEDATE:
                     setDueDate(item);
                     break;
-                case 25: // Referenztyp
+                case REF_TYPE:
                     refType = item;
                     break;
-                case 26: // Referenz
+                case REF:
                     if (!setReference(refType, item) && strict)
                         return "Valid Reference Missing";
                     break;
-                case 27: // Zusätzliche Informationen
-                    setAdditionalInfo(item);
-                    break;
-                case 28: // AV1 – Parameter
+                case ALTSCHEMA1:
                     setAlternativeSchema(item, 0);
                     break;
-                case 29: // AV2 – Parameter
+                case ALTSCHEMA2:
                     setAlternativeSchema(item, 1);
+                    break;
+                case UNSTR_MSG:
+                    setUnstructuredMsg(item);
+                    break;
+                case TRAILER:
+                    setTrailer(item);
+                    break;
+                case BILLINFO:
+                    setBillInfo(item);
                     break;
             }
         }
@@ -1048,40 +1311,65 @@ public class QRBill {
 
         StringBuffer test = new StringBuffer();
         if (this.actors[typeId].name != null) test.append(this.actors[typeId].name.trim());
-        if (this.actors[typeId].strasse != null) test.append(this.actors[typeId].strasse.trim());
-        if (this.actors[typeId].hausnummer != null) test.append(this.actors[typeId].hausnummer.trim());
-        if (this.actors[typeId].postleitzahl != null) test.append(this.actors[typeId].postleitzahl.trim());
-        if (this.actors[typeId].ort != null) test.append(this.actors[typeId].ort.trim());
-        if (this.actors[typeId].land != null) test.append(this.actors[typeId].land.trim());
+        if (this.actors[typeId].address1 != null) test.append(this.actors[typeId].address1.trim());
+        if (this.actors[typeId].address2 != null) test.append(this.actors[typeId].address2.trim());
+        if (this.actors[typeId].postcode != null) test.append(this.actors[typeId].postcode.trim());
+        if (this.actors[typeId].location != null) test.append(this.actors[typeId].location.trim());
+        if (this.actors[typeId].country != null) test.append(this.actors[typeId].country.trim());
         boolean hasEntry = test.length() > 0;
         boolean valid = true;
 
         if (hasEntry) {
             if (this.actors[typeId].name == null || this.actors[typeId].name.length() == 0)
                 valid = false;
-            if (this.actors[typeId].postleitzahl == null || this.actors[typeId].postleitzahl.length() == 0)
-                valid = false;
-            if (this.actors[typeId].ort == null || this.actors[typeId].ort.length() == 0)
-                valid = false;
-            if (this.actors[typeId].land == null || this.actors[typeId].land.length() == 0)
-                valid = false;
+            if (this.version >= 2.0F) {
+                if (this.actors[typeId].addressType == null || this.actors[typeId].addressType.length() == 0) {
+                    valid = false;
+                } else switch (this.actors[typeId].addressType) {
+                    case ADDTYPE_STRUCTURED:
+                        if (this.actors[typeId].postcode == null || this.actors[typeId].postcode.length() == 0)
+                            valid = false;
+                        if (this.actors[typeId].location == null || this.actors[typeId].location.length() == 0)
+                            valid = false;
+                        if (this.actors[typeId].country == null || this.actors[typeId].country.length() == 0)
+                            valid = false;
+                        break;
+                    case ADDTYPE_COMBINED:
+                        if (this.actors[typeId].address1 == null || this.actors[typeId].address1.length() == 0)
+                            valid = false;
+                        if (this.actors[typeId].address2 == null || this.actors[typeId].address2.length() == 0)
+                            valid = false;
+                        break;
+                    default:
+                        valid = false;
+                }
+            } else {
+                if (this.actors[typeId].postcode == null || this.actors[typeId].postcode.length() == 0)
+                    valid = false;
+                if (this.actors[typeId].location == null || this.actors[typeId].location.length() == 0)
+                    valid = false;
+                if (this.actors[typeId].country == null || this.actors[typeId].country.length() == 0)
+                    valid = false;
+            }
         } else if (typeId == QRBill.ACTOR_CR) {
             valid = false;
         }
 
         if (valid && typeId > 0) {
+            if (this.actors[typeId].addressType == null)
+                this.actors[typeId].addressType = "";
             if (this.actors[typeId].name == null)
                 this.actors[typeId].name = "";
-            if (this.actors[typeId].strasse == null)
-                this.actors[typeId].strasse = "";
-            if (this.actors[typeId].hausnummer == null)
-                this.actors[typeId].hausnummer = "";
-            if (this.actors[typeId].postleitzahl == null)
-                this.actors[typeId].postleitzahl = "";
-            if (this.actors[typeId].ort == null)
-                this.actors[typeId].ort = "";
-            if (this.actors[typeId].land == null)
-                this.actors[typeId].land = "";
+            if (this.actors[typeId].address1 == null)
+                this.actors[typeId].address1 = "";
+            if (this.actors[typeId].address2 == null)
+                this.actors[typeId].address2 = "";
+            if (this.actors[typeId].postcode == null)
+                this.actors[typeId].postcode = "";
+            if (this.actors[typeId].location == null)
+                this.actors[typeId].location = "";
+            if (this.actors[typeId].country == null)
+                this.actors[typeId].country = "";
         }
 
         return valid;
@@ -1109,6 +1397,20 @@ public class QRBill {
         return amount;
     }
 
+    private Data[] getStructure () {
+        if (this.version == null)
+            return null;
+
+        if (this.version == 2.00f) {
+            return this.version2;
+        } else if (this.version >= 1.00f) {
+            return this.version1;
+        } else {
+            this.version = null;
+            return null;
+        }
+    }
+
     /**
      * Exception thrown upon validation failure whenever the class is instantiated with raw QR code
      * or {@link #getQRCode} is called.
@@ -1121,11 +1423,12 @@ public class QRBill {
 
     private class Actor {
         public String name = "";
-        public String strasse = "";
-        public String hausnummer = "";
-        public String postleitzahl = "";
-        public String ort = "";
-        public String land = "";
+        public String addressType = ADDTYPE_STRUCTURED;
+        public String address1 = "";
+        public String address2 = "";
+        public String postcode = "";
+        public String location = "";
+        public String country = "";
 
         private int typeId;
 
