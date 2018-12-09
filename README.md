@@ -8,7 +8,7 @@ This class was purposely written using only core Java and without any imports, s
 
 As such it does not implement <i>java.io.Serializable</i>, as is, but the implementation cab be simply added to the class.
 
-This software is released under the <a href="https://github.com/gaddobenedetti/QR-Bill/blob/master/LICENSE.md">MIT Licence</a>.
+This software is released under the <a href="LICENSE.md">MIT Licence</a>.
 
 <h2>Test Project</h2>
 

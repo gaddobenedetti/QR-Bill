@@ -14,7 +14,7 @@ public class Main_v2 {
     // The width & height of the output QR Code file
     private static final int        QR_LENGTH       = 300;
     // Whether the raw QR code is also printed after each reading
-    private static final boolean    SHOW_OUTPUTCODE = true;
+    private static final boolean    SHOW_OUTPUTCODE = false;
     // The version of the QR code bill, if generated from data
     private static final Float      QR_VERSION      = 2.0F;
 
