@@ -35,12 +35,13 @@ package com.gfb.test;
  * only to serialize, but also to validate data according to the above standard.</p>
  *
  * @author  Gaddo F Benedetti
- * @version 2.0
- * @since   2018-12-09
+ * @version 2.1
+ * @since   2018-12-15
  */
 
 public class QRBill {
 
+    // TODO Remove the use of the strict param, as it serves little practical purpose.
     private boolean strict;
     private String qrType;
     private Float version;
@@ -174,8 +175,8 @@ public class QRBill {
      *     <li>Trailer: {@link #TRAILER_EPD}</li>
      * </ul>
      *
-     * Please note that this constructor and the use of the #strict paramater will be deprecated
-     * in the future.
+     * Please note that this constructor and the use of the strict paramater is deprecated and
+     * will be removed in the future.
      *
      * @param strict Boolean. Whether validation should be strict or not. If set to false,
      *               various constraints, such as field length, are ignored, although validation
@@ -185,9 +186,7 @@ public class QRBill {
     public QRBill(boolean strict) {
         this.strict = strict;
         setQrType(QRBill.QRTYPE_SPC);
-        int version = (int) (QRBill.VERSION_SUPPORTED * 100);
-        setVersion(("0000" + String.valueOf(version))
-                .substring(String.valueOf(version).length()));
+        setVersion(QRBill.VERSION_SUPPORTED);
         setCodingType(1);
         setReference();
         setAmount();
@@ -212,6 +211,9 @@ public class QRBill {
     /**
      * Constructor that generates a QR Billing object, using raw QR Bill data as input.
      *
+     * Please note that this constructor and the use of the strict paramater is deprecated and
+     * will be removed in the future.
+     *
      * @param rawData String. Basic QR Bill data. Fields should be separated by new lines. An
      *                implementation guide on the format may be found at
      *                http://www.paymentstandards.ch/
@@ -221,6 +223,7 @@ public class QRBill {
      * @throws QRBillException Thrown when validation fails. Exception message gives a
      * description of the validation error.
      */
+    @Deprecated
     public QRBill(String rawData, boolean strict) throws QRBillException {
         this.strict = strict;
         String error = validateData (rawData, strict);
@@ -451,7 +454,8 @@ public class QRBill {
      * Gets any additional information. Deprecated - use getUnstructuredMsg instead.
      *
      * This method is a copy of the #getUnstructuredMsg method, which uses the same termenology
-     * used from version 2.0 of the specification. As such it will be deprecated in the future.
+     * used from version 2.0 of the specification. As such it is deprecated and will be removed
+     * in the future.
      *
      * @return String. The additional bill information.
      */
@@ -859,8 +863,7 @@ public class QRBill {
         switch (refType) {
             case QRBill.REFTYPE_QRR:
                 this.reference = validateStr(ref, true, 27);
-                // TODO May want to improve validation with recursive digit check after modular 10 (27th digit of the reference).
-                if (this.reference == null)
+                if (this.reference == null || !Modulo10.validate(this.reference))
                     valid = false;
                 break;
             case QRBill.REFTYPE_SCOR:
@@ -882,7 +885,8 @@ public class QRBill {
      * Sets the additional information field. Deprecated - use getUnstructuredMsg instead.
      *
      * This method is a copy of the #setUnstructuredMsg method, which uses the same termenology
-     * used from version 2.0 of the specification. As such it will be deprecated in the future.
+     * used from version 2.0 of the specification. As such it is deprecated and will be removed
+     * in the future.
      *
      * @param info String. The text of the additional information. Maximum length of 140 characters.
      *
@@ -896,7 +900,8 @@ public class QRBill {
     /**
      * Sets an unstructured message.
      *
-     * @param unstructuredMsg String. The text of the unstructured message. Maximum length of 140 characters.
+     * @param unstructuredMsg String. The text of the unstructured message (version 2.0+, formerly
+     * known as additional info in version 1.0). Maximum length of 140 characters.
      *
      * @return Boolean. Whether the value has validated and stored correctly or not.
      */
@@ -1074,7 +1079,8 @@ public class QRBill {
             return false;
         } else {
             this.actors[typeId].name = validateStr(name, true, 70);
-            this.actors[typeId].addressType = validateStr(addressType, this.version >= 2.0F, 1);
+            if (addressType != null)
+                this.actors[typeId].addressType = validateStr(addressType, this.version >= 2.0F, 1);
             this.actors[typeId].address1 = validateStr(address1, false, 70);
             this.actors[typeId].address2 = validateStr(address2, false, 16);
             this.actors[typeId].postcode = validateStr(postalcode, true, 16);
@@ -1438,6 +1444,46 @@ public class QRBill {
 
         public int getType () {
             return this.typeId;
+        }
+    }
+
+    private static class Modulo10 {
+        private static final int[] pattern = { 0, 9, 4, 6, 8, 2, 7, 1, 3, 5 };
+
+        public static int getTrailingDigit (String input) {
+            input = cleanInput(input);
+            if (input == null || input.length() < 1 )
+                return -1;
+
+            int check = 0;
+            int current = -1;
+            for (int i = 0; i < input.length(); i++) {
+                try {
+                    current = Integer.parseInt(String.valueOf(input.charAt(i)));
+                } catch (Exception e) {
+                    return current;
+                }
+                check = pattern[(current + check) % pattern.length];
+            }
+            return pattern.length - check;
+        }
+
+        public static boolean validate (String input) {
+            input = cleanInput(input);
+            if (input == null || input.length() < 2 )
+                return false;
+
+            String td = input.substring(input.length() - 1);
+            String bd = input.substring(0, input.length() - 1);
+
+            return td.equalsIgnoreCase(String.valueOf(getTrailingDigit(bd)));
+        }
+
+        private static String cleanInput (String input) {
+            if (input != null || input.length() > 0) {
+                input = input.replace(" ", "").trim();
+            }
+            return input;
         }
     }
 

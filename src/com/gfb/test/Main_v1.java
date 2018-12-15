@@ -29,7 +29,7 @@ public class Main_v1 {
     private static final String     COPY_INVOICE    = "res/qr_tests_v1/Invoice#_new.png";
     // Which of the three input files to be processed (1 - 3). If any other value is used,
     // all will be processed in turn.
-    private static final int        QR_INDEX        = 2;
+    private static final int        QR_INDEX        = 0;
     // The width & height of the output QR Code file
     private static final int        QR_LENGTH       = 300;
     // Whether the raw QR code is also printed after each reading
