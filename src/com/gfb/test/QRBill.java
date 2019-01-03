@@ -55,7 +55,7 @@ public class QRBill {
     private String unstructuredMsg = "";
     private String trailer;
     private String billInfo = "";
-    private String[] as = new String[] { "", ""};
+    private String[] as = new String[] { "", "" };
     private Actor[] actors = new Actor[] {
             new Actor(ACTOR_CR),
             new Actor(ACTOR_UCR),
@@ -976,11 +976,11 @@ public class QRBill {
      */
     public boolean setAlternativeSchema(String data, int index) {
         if (data == null || index < 0 || index > 1) {
-            this.as[index] = "";
+            return false;
         } else {
             this.as[index] = validateStr(data, false, 100);
+            return true;
         }
-        return true;
     }
 
     /**
@@ -1015,7 +1015,8 @@ public class QRBill {
             this.as[0] = "";
             this.as[1] = "";
         } else for (int i = 0; i < data.length; i++) {
-            setAlternativeSchema(data[i], i);
+            if (!setAlternativeSchema(data[i], i))
+                return false;
         }
         return true;
     }
