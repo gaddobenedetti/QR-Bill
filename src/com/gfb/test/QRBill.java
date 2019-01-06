@@ -35,8 +35,8 @@ package com.gfb.test;
  * only to serialize, but also to validate data according to the above standard.</p>
  *
  * @author  Gaddo F Benedetti
- * @version 2.1
- * @since   2018-12-15
+ * @version 2.2
+ * @since   2019-01-06
  */
 
 public class QRBill {
@@ -187,7 +187,7 @@ public class QRBill {
         this.strict = strict;
         setQrType(QRBill.QRTYPE_SPC);
         setVersion(QRBill.VERSION_SUPPORTED);
-        setCodingType(1);
+        setCodingType(CODING_LATIN_1);
         setReference();
         setAmount();
         setCurrency(QRBill.CURRENCY_CHF);

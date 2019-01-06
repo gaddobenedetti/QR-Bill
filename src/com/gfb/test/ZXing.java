@@ -61,14 +61,6 @@ public class ZXing {
         return contents;
     }
     
-//    public static void generateQRCodeImage(String text, int width, int height, String filePath) throws WriterException, IOException {
-//        QRCodeWriter qrCodeWriter = new QRCodeWriter();
-//        BitMatrix bitMatrix = qrCodeWriter.encode(text, BarcodeFormat.QR_CODE, width, height);
-//
-//        Path path = FileSystems.getDefault().getPath(filePath);
-//        MatrixToImageWriter.writeToPath(bitMatrix, "PNG", path);
-//    }
-    
     public static void generateQRCodeImage(String text, int width, int height, String filePath, String embeddedImage) throws WriterException, IOException, NotFoundException {
         final float maxRatio = 0.12F;
         BitMatrix bitMatrix;
@@ -78,7 +70,7 @@ public class ZXing {
             bitMatrix = qrCodeWriter.encode(text, BarcodeFormat.QR_CODE, width, height);
         } else {
             Map<EncodeHintType, ErrorCorrectionLevel> hints = new HashMap<>();
-            hints.put(EncodeHintType.ERROR_CORRECTION, ErrorCorrectionLevel.H);
+            hints.put(EncodeHintType.ERROR_CORRECTION, ErrorCorrectionLevel.M);
             bitMatrix = qrCodeWriter.encode(text, BarcodeFormat.QR_CODE, width, height, hints);
             BufferedImage qrImage = MatrixToImageWriter.toBufferedImage(bitMatrix);
             BufferedImage embImage = ImageIO.read(new File(embeddedImage));
