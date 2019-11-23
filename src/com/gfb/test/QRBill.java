@@ -19,6 +19,8 @@
 
 package com.gfb.test;
 
+import java.lang.reflect.Constructor;
+
 /**
  * <h1>Swiss Payments Code Serializer</h1>
  *
@@ -35,8 +37,8 @@ package com.gfb.test;
  * only to serialize, but also to validate data according to the above standard.</p>
  *
  * @author  Gaddo F Benedetti
- * @version 2.2
- * @since   2019-01-06
+ * @version 2.3
+ * @since   2019-11-23
  */
 
 public class QRBill {
@@ -226,9 +228,9 @@ public class QRBill {
     @Deprecated
     public QRBill(String rawData, boolean strict) throws QRBillException {
         this.strict = strict;
-        String error = validateData (rawData, strict);
+        QRBillException error = validateData (rawData, strict);
         if (error != null && strict)
-            throw new QRBillException(error);
+            throw error;
     }
 
     /**
@@ -375,9 +377,9 @@ public class QRBill {
      */
     public String getQRCode() throws QRBillException {
         String code = toString();
-        String error = validateData (code, this.strict);
+        QRBillException error = validateData (code, this.strict);
         if (error != null)
-            throw new QRBillException(error);
+            throw error;
         return code;
     }
 
@@ -1092,19 +1094,19 @@ public class QRBill {
         }
     }
 
-    private String validateData (String rawData, boolean strict) {
+    private QRBillException validateData (String rawData, boolean strict) {
         if (rawData == null || rawData.length() == 0)
-            return "Input data empty or null.";
+            return new QRBillException(1, "Input data empty or null.");
 
         if (rawData.length() > 997)
-            return "Input data exceeds maximum allowed limit.";
+            return new QRBillException(2, "Input data exceeds maximum allowed limit.");
 
         String[] qrData = rawData.trim().split("\n");
         if (qrData.length < 25)
-            return "Malformed Data - insufficient fields.";
+            return new QRBillException(3, "Malformed Data - insufficient fields.");
 
         if (!setVersion(qrData[1]) && strict)
-            return "Version invalid or not supported";
+            return new QRBillException(4, "Version invalid or not supported");
 
         this.actors[0] = new Actor(QRBill.ACTOR_CR);
         this.actors[1] = new Actor(QRBill.ACTOR_UCR);
@@ -1123,15 +1125,15 @@ public class QRBill {
                     break;
                 case QRTYPE:
                     if (!setQrType(item) && strict)
-                        return "QR Type invalid or not supported";
+                        return new QRBillException(5, "QR Type invalid or not supported");
                     break;
                 case CODING: // Coding Type
                     if (!setCodingType(item) && strict)
-                        return "Valid Coding type Missing";
+                        return new QRBillException(6, "Valid Coding type Missing");
                     break;
                 case ACCOUNT: // Konto
                     if (!setIBAN(item) && strict)
-                        return "Valid IBAN Missing";
+                        return new QRBillException(7, "Valid IBAN Missing");
                     break;
                 case CR_NAME:
                 case UCR_NAME:
@@ -1208,7 +1210,7 @@ public class QRBill {
                     break;
                 case CURRENCY:
                     if (!setCurrency(item) && strict)
-                        return "Valid Currency Missing";
+                        return new QRBillException(8, "Valid Currency Missing");
                     break;
                 case DUEDATE:
                     setDueDate(item);
@@ -1218,7 +1220,7 @@ public class QRBill {
                     break;
                 case REF:
                     if (!setReference(refType, item) && strict)
-                        return "Valid Reference Missing";
+                        return new QRBillException(9, "Valid Reference Missing");
                     break;
                 case ALTSCHEMA1:
                     setAlternativeSchema(item, 0);
@@ -1247,7 +1249,7 @@ public class QRBill {
                 allGood = false;
 
         if (!allGood && strict)
-            return "Mandatory actor dependancies not met.";
+            return new QRBillException(10, "Mandatory actor dependancies not met.");
 
         return null;
 
@@ -1420,11 +1422,45 @@ public class QRBill {
 
     /**
      * Exception thrown upon validation failure whenever the class is instantiated with raw QR code
-     * or {@link #getQRCode} is called.
+     * or {@link #getQRCode} is called. This exception object contains both an error code (int) and
+     * error message (String).
+     *
+     * The error codes and messages that may be returned are as follows:
+     *
+     * <ol>
+     *  <li>Input data empty or null.
+     *  <li>Input data exceeds maximum allowed limit.
+     *  <li>Malformed Data - insufficient fields.
+     *  <li>Version invalid or not supported.
+     *  <li>QR Type invalid or not supported.
+     *  <li>Valid Coding type Missing.
+     *  <li>Valid IBAN Missing.
+     *  <li>Valid Currency Missing.
+     *  <li>Valid Reference Missing.
+     *  <li>Mandatory actor dependencies not met.
+     * </ol>
      */
     public class QRBillException extends Exception {
-        public QRBillException(String msg) {
+        private int errorId;
+
+        /**
+         * Constructor for instantiating a QRBillException object.
+         *
+         * @param errorId Integer. A custom identifying error ID code.
+         * @param msg String. The error description (overrides {@link java.lang.Exception}).
+         */
+        public QRBillException(int errorId, String msg) {
             super(msg);
+            this.errorId = errorId;
+        }
+
+        /**
+         * Returns a code corrisponding to the exception caught.
+         *
+         * @return Integer. The error ID code.
+         */
+        public int getErrorId () {
+            return this.errorId;
         }
     }
 

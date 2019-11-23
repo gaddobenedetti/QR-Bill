@@ -55,7 +55,7 @@ public class ZXing {
             Result result = reader.decode(bitmap, hint);
             contents = result.getText();
         } catch (NotFoundException e) {
-            Helper.logMessage("Error 6: " + e.getMessage());
+            QRBillHelper.logMessage("Error 6: " + e.getMessage());
         }
         
         return contents;

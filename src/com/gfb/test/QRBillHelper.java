@@ -6,7 +6,7 @@ import com.google.zxing.WriterException;
 import java.io.File;
 import java.io.IOException;
 
-public class Helper {
+public class QRBillHelper {
 
     private static final String     CH_CROSS        = "res/qrbill_kreuz.png";
 

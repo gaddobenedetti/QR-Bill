@@ -8,5 +8,6 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" exported="" name="com.google.zxing:javase:Release" level="project" />
+    <orderEntry type="library" name="Dart SDK" level="project" />
   </component>
 </module>

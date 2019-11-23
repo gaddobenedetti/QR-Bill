@@ -20,11 +20,11 @@ It should be noted that the <a href="./qr_tests/Rechnung1.png">first version 1.0
 
 The test project consists of three classes:
 <ul>
-  <li> <b>Main_v1.java</b> The main (version 1.0) test class to be run.</li>
-  <li> <b>Correct_v1.java</b> A second test class, which reads in the example that contains an error, edits and corrects it before carrying out the remainder of the tests as in the Main class.</li>
-  <li> <b>Main_v2.java</b> The main (version 2.0) test class to be run.</li>
+  <li> <b>Test_QRBill_v1.java</b> The main (version 1.0) test class to be run.</li>
+  <li> <b>Correct_QRBill_v1.java</b> A second (version 1.0) test class, which reads in the example that contains an error, edits and corrects it before carrying out the remainder of the tests as in the Main class.</li>
+  <li> <b>Test_QRBill_v3.java</b> The main (version 2.0) test class to be run.</li>
   <li> <b>ZXing.java</b> A series of static helper methods, associated with interfacing with ZXing.</li>
-  <li> <b>Helper.java</b> A series of static miscellaneous helper methods.</li>
+  <li> <b>QRBillHelper.java</b> A series of static miscellaneous helper methods.</li>
   <li> <b>QRBill.java</b> The <b>Swiss Payments Code Serializer</b> class.</li>
 </ul>
 

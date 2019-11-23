@@ -21,7 +21,7 @@ package com.gfb.test;
 
 import java.io.File;
 
-public class Correct_v1 {
+public class Correct__QRBill_v1 {
 
     /**
      * As the first example QR code includes a number of errors in the alternative schema portion of the code, this
@@ -51,7 +51,7 @@ public class Correct_v1 {
 
     public static void main(String[] args) {
 
-        Helper.logMessage("Test Subject: " + TEST_INVOICE + "\n");
+        QRBillHelper.logMessage("Test Subject: " + TEST_INVOICE + "\n");
 
         String[] responses = new String[3];
 
@@ -61,12 +61,12 @@ public class Correct_v1 {
 
         QRBill invoice = null;
         if (new File(TEST_INVOICE).exists()) {
-            responses[0] = Helper.readQR (TEST_INVOICE, COPY_INVOICE,"First Scan Error", false);
+            responses[0] = QRBillHelper.readQR (TEST_INVOICE, COPY_INVOICE,"First Scan Error", false);
             if (responses[0] != null) {
-                invoice = Helper.serialize (responses[0], "Serialize Error", false);
+                invoice = QRBillHelper.serialize (responses[0], "Serialize Error", false);
             }
         } else {
-            invoice = Helper.generate ("File not found Error", 1.0F);
+            invoice = QRBillHelper.generate ("File not found Error", 1.0F);
         }
 
         if (invoice != null) {
@@ -75,17 +75,17 @@ public class Correct_v1 {
             try {
                 responses[1] = invoice.getQRCode();
 
-                if (Helper.writeQR(COPY_INVOICE, invoice, "QR Generation Error", QR_LENGTH, false)) {
-                    responses[2] = Helper.readQR(COPY_INVOICE, COPY_INVOICE, "Second Scan Error", false);
+                if (QRBillHelper.writeQR(COPY_INVOICE, invoice, "QR Generation Error", QR_LENGTH, false)) {
+                    responses[2] = QRBillHelper.readQR(COPY_INVOICE, COPY_INVOICE, "Second Scan Error", false);
                 }
             } catch (QRBill.QRBillException e) {
-                Helper.logMessage("Error)", "Malformed QR Code.");
+                QRBillHelper.logMessage("Error)", "Malformed QR Code.");
             }
 
-            Helper.showAlternitiveSchema(invoice);
+            QRBillHelper.showAlternitiveSchema(invoice);
         }
-        Helper.showSummary(responses);
-//        Helper.cleanupFiles(COPY_INVOICE);
+        QRBillHelper.showSummary(responses);
+//        QRBillHelper.cleanupFiles(COPY_INVOICE);
     }
 
 }

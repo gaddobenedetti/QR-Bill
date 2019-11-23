@@ -2,7 +2,7 @@ package com.gfb.test;
 
 import java.io.File;
 
-public class Main_v2 {
+public class Test_QRBill_v2 {
 
     // The file path of the input QR Code file
     private static final String     TEST_INVOICE    = "res/qr_tests_v2/Invoice#.jpg";
@@ -31,36 +31,36 @@ public class Main_v2 {
             String testInvoiceFile = TEST_INVOICE.replace("#", String.valueOf(i));
             String copyInvoiceFile = COPY_INVOICE.replace("#", String.valueOf(i));
             String[] responses = new String[3];
-            Helper.logMessage("Test Subject: " + testInvoiceFile + "\n");
+            QRBillHelper.logMessage("Test Subject: " + testInvoiceFile + "\n");
 
             File copyFile = new File(copyInvoiceFile);
             if (copyFile.exists())
                 copyFile.delete();
             QRBill invoice = null;
             if (new File(testInvoiceFile).exists()) {
-                responses[0] = Helper.readQR (testInvoiceFile, copyInvoiceFile,"First Scan Error", SHOW_OUTPUTCODE);
+                responses[0] = QRBillHelper.readQR (testInvoiceFile, copyInvoiceFile,"First Scan Error", SHOW_OUTPUTCODE);
                 if (responses[0] != null) {
-                    invoice = Helper.serialize (responses[0], "Serialize Error", SHOW_OUTPUTCODE);
+                    invoice = QRBillHelper.serialize (responses[0], "Serialize Error", SHOW_OUTPUTCODE);
                 }
             } else {
-                invoice = Helper.generate ("Failed to generate QR code", QR_VERSION);
+                invoice = QRBillHelper.generate ("Failed to generate QR code", QR_VERSION);
             }
 
             if (invoice != null) {
                 try {
                     responses[1] = invoice.getQRCode();
 
-                    if (Helper.writeQR(copyInvoiceFile, invoice, "QR Generation Error", QR_LENGTH, SHOW_OUTPUTCODE)) {
-                        responses[2] = Helper.readQR (copyInvoiceFile, copyInvoiceFile, "Second Scan Error", SHOW_OUTPUTCODE);
+                    if (QRBillHelper.writeQR(copyInvoiceFile, invoice, "QR Generation Error", QR_LENGTH, SHOW_OUTPUTCODE)) {
+                        responses[2] = QRBillHelper.readQR (copyInvoiceFile, copyInvoiceFile, "Second Scan Error", SHOW_OUTPUTCODE);
                     }
                 } catch (QRBill.QRBillException e) {
-                    Helper.logMessage("Error)", "Malformed QR Code.");
+                    QRBillHelper.logMessage("Error)", "Malformed QR Code.");
                 }
 
-                Helper.showAlternitiveSchema(invoice);
+                QRBillHelper.showAlternitiveSchema(invoice);
             }
 
-            Helper.showSummary(responses);
+            QRBillHelper.showSummary(responses);
         }
     }
 
