@@ -19,8 +19,6 @@
 
 package com.gfb.test;
 
-import java.lang.reflect.Constructor;
-
 /**
  * <h1>Swiss Payments Code Serializer</h1>
  *
@@ -37,7 +35,7 @@ import java.lang.reflect.Constructor;
  * only to serialize, but also to validate data according to the above standard.</p>
  *
  * @author  Gaddo F Benedetti
- * @version 2.3
+ * @version 2.3.1
  * @since   2019-11-23
  */
 
