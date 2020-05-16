@@ -1083,7 +1083,8 @@ public class QRBill {
             if (addressType != null)
                 this.actors[typeId].addressType = validateStr(addressType, this.version >= 2.0F, 1);
             this.actors[typeId].address1 = validateStr(address1, false, 70);
-            this.actors[typeId].address2 = validateStr(address2, false, 16);
+            this.actors[typeId].address2 = validateStr(address2, false,
+                    this.actors[typeId].addressType.equals(ADDTYPE_COMBINED) ? 70 : 16);
             this.actors[typeId].postcode = validateStr(postalcode, true, 16);
             this.actors[typeId].location = validateStr(location, true, 35);
             this.actors[typeId].country = validateStr(country, true, 2);
@@ -1159,7 +1160,8 @@ public class QRBill {
                     actorIds = new Data[] {Data.CR_ADDRESS2, Data.UCR_ADDRESS2, Data.UDR_ADDRESS2};
                     for (int j = 0; j < actorIds.length; j++) {
                         if (actorIds[j] == key) {
-                            this.actors[j].address2 = validateStr(item, false, 16);
+                            this.actors[j].address2 = validateStr(item, false,
+                                    this.actors[j].addressType.equals(ADDTYPE_COMBINED) ? 70 : 16);
                         }
                     }
                     break;
