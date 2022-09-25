@@ -19,6 +19,10 @@
 
 package com.gfb.test;
 
+import java.io.StringWriter;
+import java.util.ArrayList;
+import java.util.HashMap;
+
 /**
  * <h1>Swiss Payments Code Serializer</h1>
  *
@@ -42,7 +46,6 @@ package com.gfb.test;
 public class QRBill {
 
     // TODO Remove the use of the strict param, as it serves little practical purpose.
-    private boolean strict;
     private String qrType;
     private Float version;
     private int codingType;
@@ -146,23 +149,6 @@ public class QRBill {
     };
 
     /**
-     * Constructor that generates a partially empty QR Billing object, calling for strict
-     * validation and a number of default values. These values are:
-     * <ul>
-     *     <li>QR Type Identifier: {@link #QRTYPE_SPC}</li>
-     *     <li>Version: {@value #VERSION_SUPPORTED}</li>
-     *     <li>Character Set: {@link #CODING_LATIN_1}</li>
-     *     <li>Reference Type: {@link #REFTYPE_NON}</li>
-     *     <li>Amount: None</li>
-     *     <li>Currency: {@link #CURRENCY_CHF}</li>
-     *     <li>Trailer: {@link #TRAILER_EPD}</li>
-     * </ul>
-     */
-    public QRBill() {
-        this(true);
-    }
-
-    /**
      * Constructor that generates a partially empty QR Billing object, with a number of default
      * values. These values are:
      * <ul>
@@ -183,8 +169,7 @@ public class QRBill {
      *               will still occur.
      */
     @Deprecated
-    public QRBill(boolean strict) {
-        this.strict = strict;
+    public QRBill() {
         setQrType(QRBill.QRTYPE_SPC);
         setVersion(QRBill.VERSION_SUPPORTED);
         setCodingType(CODING_LATIN_1);
@@ -192,20 +177,6 @@ public class QRBill {
         setAmount();
         setCurrency(QRBill.CURRENCY_CHF);
         setTrailer(QRBill.TRAILER_EPD);
-    }
-
-    /**
-     * Constructor that generates a QR Billing object, calling for strict validation and using raw
-     * QR Bill data as input.
-     *
-     * @param rawData String. Basic QR Bill data. Fields should be separated by new lines. An
-     *                implementation guide on the format may be found at
-     *                http://www.paymentstandards.ch/
-     * @throws QRBillException Thrown when validation fails. Exception message gives a
-     * description of the validation error.
-     */
-    public QRBill(String rawData) throws QRBillException {
-        this(rawData, true);
     }
 
     /**
@@ -220,15 +191,19 @@ public class QRBill {
      * @param strict Boolean. Whether validation should be strict or not. If set to false,
      *               various constraints, such as field length, are ignored, although validation
      *               will still occur.
-     * @throws QRBillException Thrown when validation fails. Exception message gives a
-     * description of the validation error.
      */
     @Deprecated
-    public QRBill(String rawData, boolean strict) throws QRBillException {
-        this.strict = strict;
-        QRBillException error = validateData (rawData, strict);
-        if (error != null && strict)
-            throw error;
+    public QRBill(String rawData) {
+        validateData(rawData);
+    }
+    
+    /**
+     * Returns whether the current QR Bill is valid.
+     *
+     * @return Boolean. Whether the current QR Bill is valid or not.
+     */
+    public boolean isValid () {
+        return validateData(toString()).size() == 0;
     }
 
     /**
@@ -374,11 +349,7 @@ public class QRBill {
      * description of the validation error.
      */
     public String getQRCode() throws QRBillException {
-        String code = toString();
-        QRBillException error = validateData (code, this.strict);
-        if (error != null)
-            throw error;
-        return code;
+        return toString();
     }
 
     /**
@@ -1089,23 +1060,24 @@ public class QRBill {
             this.actors[typeId].location = validateStr(location, true, 35);
             this.actors[typeId].country = validateStr(country, true, 2);
 
-            return validateDependancies(typeId, this.strict);
+            return validateDependancies(typeId);
         }
     }
 
-    private QRBillException validateData (String rawData, boolean strict) {
+    private ArrayList<QRBillException> validateData (String rawData) {
+        ArrayList<QRBillException> errors = new ArrayList<QRBillException>();
         if (rawData == null || rawData.length() == 0)
-            return new QRBillException(1, "Input data empty or null.");
+        errors.add(new QRBillException(1, "Input data empty or null."));
 
         if (rawData.length() > 997)
-            return new QRBillException(2, "Input data exceeds maximum allowed limit.");
+            errors.add(new QRBillException(2, "Input data exceeds maximum allowed limit."));
 
         String[] qrData = rawData.trim().split("\n");
         if (qrData.length < 25)
-            return new QRBillException(3, "Malformed Data - insufficient fields.");
+            errors.add(new QRBillException(3, "Malformed Data - insufficient fields."));
 
-        if (!setVersion(qrData[1]) && strict)
-            return new QRBillException(4, "Version invalid or not supported");
+        if (!setVersion(qrData[1]))
+            errors.add(new QRBillException(4, "Version invalid or not supported"));
 
         this.actors[0] = new Actor(QRBill.ACTOR_CR);
         this.actors[1] = new Actor(QRBill.ACTOR_UCR);
@@ -1123,16 +1095,16 @@ public class QRBill {
                     // Ignore
                     break;
                 case QRTYPE:
-                    if (!setQrType(item) && strict)
-                        return new QRBillException(5, "QR Type invalid or not supported");
+                    if (!setQrType(item))
+                        errors.add(new QRBillException(5, "QR Type invalid or not supported"));
                     break;
                 case CODING: // Coding Type
-                    if (!setCodingType(item) && strict)
-                        return new QRBillException(6, "Valid Coding type Missing");
+                    if (!setCodingType(item))
+                        errors.add(new QRBillException(6, "Valid Coding type Missing"));
                     break;
                 case ACCOUNT: // Konto
-                    if (!setIBAN(item) && strict)
-                        return new QRBillException(7, "Valid IBAN Missing");
+                    if (!setIBAN(item))
+                        errors.add(new QRBillException(7, "Valid IBAN Missing"));
                     break;
                 case CR_NAME:
                 case UCR_NAME:
@@ -1159,7 +1131,7 @@ public class QRBill {
                 case UDR_ADDRESS2:
                     actorIds = new Data[] {Data.CR_ADDRESS2, Data.UCR_ADDRESS2, Data.UDR_ADDRESS2};
                     for (int j = 0; j < actorIds.length; j++) {
-                        if (actorIds[j] == key) {
+                        if (actorIds[j] == key && this.actors[j].addressType != null) {
                             this.actors[j].address2 = validateStr(item, false,
                                     this.actors[j].addressType.equals(ADDTYPE_COMBINED) ? 70 : 16);
                         }
@@ -1209,8 +1181,8 @@ public class QRBill {
                     setAmount(item);
                     break;
                 case CURRENCY:
-                    if (!setCurrency(item) && strict)
-                        return new QRBillException(8, "Valid Currency Missing");
+                    if (!setCurrency(item))
+                        errors.add(new QRBillException(8, "Valid Currency Missing"));
                     break;
                 case DUEDATE:
                     setDueDate(item);
@@ -1219,8 +1191,8 @@ public class QRBill {
                     refType = item;
                     break;
                 case REF:
-                    if (!setReference(refType, item) && strict)
-                        return new QRBillException(9, "Valid Reference Missing");
+                    if (!setReference(refType, item))
+                        errors.add(new QRBillException(9, "Valid Reference Missing"));
                     break;
                 case ALTSCHEMA1:
                     setAlternativeSchema(item, 0);
@@ -1245,11 +1217,11 @@ public class QRBill {
 
         boolean allGood = true;
         for (int i = 0; i < this.actors.length; i++)
-            if (!validateDependancies(i, strict))
+            if (!validateDependancies(i))
                 allGood = false;
 
-        if (!allGood && strict)
-            return new QRBillException(10, "Mandatory actor dependancies not met.");
+        if (!allGood)
+            errors.add(new QRBillException(10, "Mandatory actor dependancies not met."));
 
         return null;
 
@@ -1314,7 +1286,7 @@ public class QRBill {
         }
     }
 
-    private boolean validateDependancies (int typeId, boolean strict) {
+    private boolean validateDependancies (int typeId) {
         if (typeId > 2 || typeId < 0)
             return false;
 
@@ -1466,7 +1438,7 @@ public class QRBill {
 
     private class Actor {
         public String name = "";
-        public String addressType = ADDTYPE_STRUCTURED;
+        public String addressType = QRBill.ADDTYPE_STRUCTURED;
         public String address1 = "";
         public String address2 = "";
         public String postcode = "";
@@ -1477,51 +1449,64 @@ public class QRBill {
 
         public Actor (int type) {
             this.typeId = type;
+            this.addressType = QRBill.ADDTYPE_STRUCTURED;
         }
 
-        public int getType () {
+        public int getType() {
             return this.typeId;
         }
     }
 
     private static class Modulo10 {
-        private static final int[] pattern = { 0, 9, 4, 6, 8, 2, 7, 1, 3, 5 };
-
-        public static int getTrailingDigit (String input) {
-            input = cleanInput(input);
-            if (input == null || input.length() < 1 )
-                return -1;
-
-            int check = 0;
-            int current = -1;
-            for (int i = 0; i < input.length(); i++) {
-                try {
-                    current = Integer.parseInt(String.valueOf(input.charAt(i)));
-                } catch (Exception e) {
-                    return current;
-                }
-                check = pattern[(current + check) % pattern.length];
-            }
-            return pattern.length - check;
+        private static final int[][] pattern = {
+        { 0, 9, 4, 6, 8, 2, 7, 1, 3, 5 },
+        { 9, 4, 6, 8, 2, 7, 1, 3, 5, 0 },
+        { 4, 6, 8, 2, 7, 1, 3, 5, 0, 9 },
+        { 6, 8, 2, 7, 1, 3, 5, 0, 9, 4 },
+        { 8, 2, 7, 1, 3, 5, 0, 9, 4, 6 },
+        { 2, 7, 1, 3, 5, 0, 9, 4, 6, 8 },
+        { 7, 1, 3, 5, 0, 9, 4, 6, 8, 2 },
+        { 1, 3, 5, 0, 9, 4, 6, 8, 2, 7 },
+        { 3, 5, 0, 9, 4, 6, 8, 2, 7, 1 },
+        { 5, 0, 9, 4, 6, 8, 2, 7, 1, 3 }
+      };
+    
+      private static final int codeLength = 27;
+    
+      public static boolean validate(String input) {
+        if (input != null && input.length() > 0) {
+          input = input.replaceAll(" ", "").trim();
         }
-
-        public static boolean validate (String input) {
-            input = cleanInput(input);
-            if (input == null || input.length() < 2 )
-                return false;
-
+    
+        if (input == null) return false;
+    
+        try {
+            int check = getCheckDigit(input);
             String td = input.substring(input.length() - 1);
-            String bd = input.substring(0, input.length() - 1);
-
-            return td.equalsIgnoreCase(String.valueOf(getTrailingDigit(bd)));
+            int endDigit = Integer.parseInt(td);
+            return endDigit == check;
+        } catch (Exception e) {
+            return false;
         }
-
-        private static String cleanInput (String input) {
-            if (input != null || input.length() > 0) {
-                input = input.replace(" ", "").trim();
+      }
+    
+      public static int getCheckDigit(String input) {
+        if (input.length() < codeLength) return -1;
+    
+        String bd = input.substring(0, input.length() - 1);
+    
+        int position = 0;
+        try {
+            for (int i = 0; i < bd.length(); i++) {
+                int digit = Integer.parseInt((String) Character.toString(bd.charAt(i)));
+                position = pattern[position][digit];
             }
-            return input;
+            position = pattern[position][position];
+            return position;
+        } catch (Exception e) {
+            return -1;
         }
+      }
     }
 
 }
