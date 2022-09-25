@@ -163,10 +163,6 @@ public class QRBill {
      *
      * Please note that this constructor and the use of the strict paramater is deprecated and
      * will be removed in the future.
-     *
-     * @param strict Boolean. Whether validation should be strict or not. If set to false,
-     *               various constraints, such as field length, are ignored, although validation
-     *               will still occur.
      */
     @Deprecated
     public QRBill() {
@@ -188,9 +184,6 @@ public class QRBill {
      * @param rawData String. Basic QR Bill data. Fields should be separated by new lines. An
      *                implementation guide on the format may be found at
      *                http://www.paymentstandards.ch/
-     * @param strict Boolean. Whether validation should be strict or not. If set to false,
-     *               various constraints, such as field length, are ignored, although validation
-     *               will still occur.
      */
     @Deprecated
     public QRBill(String rawData) {
