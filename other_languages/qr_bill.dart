@@ -128,7 +128,7 @@ class QRBill {
       for (Data element in structure) {
         switch (element) {
           case Data.none:
-            // Ignore
+          // Ignore
             break;
           case Data.qrType:
             out.writeln(getQrType());
@@ -459,7 +459,7 @@ class QRBill {
 
     if (isValid) {
       _dueDate =
-          "$year-${("00$month").substring(month.toString().length)}-${("00$day").substring(day.toString().length)}";
+      "$year-${("00$month").substring(month.toString().length)}-${("00$day").substring(day.toString().length)}";
     } else {
       _dueDate = "";
     }
@@ -560,13 +560,13 @@ class QRBill {
 
   bool setActor(
       {required int typeId,
-      String? name,
-      String? addressType,
-      String? address1,
-      String? address2,
-      String? postalcode,
-      String? location,
-      String? country}) {
+        String? name,
+        String? addressType,
+        String? address1,
+        String? address2,
+        String? postalcode,
+        String? location,
+        String? country}) {
     if (typeId != QRBill.actorCR &&
         typeId != QRBill.actorUCR &&
         typeId != QRBill.actorUDR) {
@@ -621,7 +621,7 @@ class QRBill {
       switch (key) {
         case Data.none:
         case Data.version:
-          // Ignore
+        // Ignore
           break;
         case Data.qrType:
           if (!setQrType(item)) {
@@ -850,6 +850,8 @@ class QRBill {
         } else {
           switch (_actors[typeId].addressType) {
             case addTypeStructured:
+              if (_actors[typeId].address1 == null ||
+                  _actors[typeId].address1!.isEmpty) valid = false;
               if (_actors[typeId].postcode == null ||
                   _actors[typeId].postcode!.isEmpty) valid = false;
               if (_actors[typeId].location == null ||
@@ -1032,6 +1034,8 @@ class Modulo10 {
     [5, 0, 9, 4, 6, 8, 2, 7, 1, 3]
   ];
 
+  static final checkDigits = [0, 9, 8, 7, 6, 5, 4, 3, 2, 1];
+
   static const codeLength = 27;
 
   static bool validate(String? input) {
@@ -1065,7 +1069,6 @@ class Modulo10 {
         position = pattern[position][digit];
       }
     }
-    position = pattern[position][position];
-    return position;
+    return checkDigits[position];
   }
 }
