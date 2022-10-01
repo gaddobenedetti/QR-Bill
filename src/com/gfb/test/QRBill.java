@@ -1301,6 +1301,8 @@ public class QRBill {
                     valid = false;
                 } else switch (this.actors[typeId].addressType) {
                     case ADDTYPE_STRUCTURED:
+                        if (this.actors[typeId].address1 == null || this.actors[typeId].address1.length() == 0)
+                            valid = false;
                         if (this.actors[typeId].postcode == null || this.actors[typeId].postcode.length() == 0)
                             valid = false;
                         if (this.actors[typeId].location == null || this.actors[typeId].location.length() == 0)
@@ -1463,6 +1465,10 @@ public class QRBill {
         { 3, 5, 0, 9, 4, 6, 8, 2, 7, 1 },
         { 5, 0, 9, 4, 6, 8, 2, 7, 1, 3 }
       };
+
+      private static final int[] checkDigits = {
+        0, 9, 8, 7, 6, 5, 4, 3, 2, 1
+      };
     
       private static final int codeLength = 27;
     
@@ -1494,8 +1500,7 @@ public class QRBill {
                 int digit = Integer.parseInt((String) Character.toString(bd.charAt(i)));
                 position = pattern[position][digit];
             }
-            position = pattern[position][position];
-            return position;
+            return checkDigits[position];
         } catch (Exception e) {
             return -1;
         }
