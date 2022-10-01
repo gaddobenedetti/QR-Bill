@@ -210,10 +210,6 @@ class QRBill {
      *
      * Please note that this constructor and the use of the strict paramater is deprecated and
      * will be removed in the future.
-     *
-     * @param strict Boolean. Whether validation should be strict or not. If set to false,
-     * various constraints, such as field length, are ignored, although validation
-     * will still occur.
      */
     @Deprecated("")
     constructor() {
@@ -235,9 +231,6 @@ class QRBill {
      * @param rawData String. Basic QR Bill data. Fields should be separated by new lines. An
      * implementation guide on the format may be found at
      * http://www.paymentstandards.ch/
-     * @param strict Boolean. Whether validation should be strict or not. If set to false,
-     * various constraints, such as field length, are ignored, although validation
-     * will still occur.
      */
     @Deprecated("")
     constructor(rawData: String?) {
@@ -1322,6 +1315,7 @@ class QRBill {
                     valid = false
                 } else when (actors[typeId].addressType) {
                     ADDTYPE_STRUCTURED -> {
+                        if (actors[typeId].address1 == null || actors[typeId].address1!!.length == 0) valid = false
                         if (actors[typeId].postcode == null || actors[typeId].postcode!!.length == 0) valid = false
                         if (actors[typeId].location == null || actors[typeId].location!!.length == 0) valid = false
                         if (actors[typeId].country == null || actors[typeId].country!!.length == 0) valid = false
@@ -1448,6 +1442,9 @@ class QRBill {
             intArrayOf(3, 5, 0, 9, 4, 6, 8, 2, 7, 1),
             intArrayOf(5, 0, 9, 4, 6, 8, 2, 7, 1, 3)
         )
+        private val checkDigits = intArrayOf(
+            0, 9, 8, 7, 6, 5, 4, 3, 2, 1
+        )
         private const val codeLength = 27
         fun validate(input: String?): Boolean {
             var input = input
@@ -1473,8 +1470,7 @@ class QRBill {
                     val digit: Int = java.lang.Character.toString(bd[i]) as String?. toInt ()
                     position = pattern[position][digit]
                 }
-                position = pattern[position][position]
-                position
+                checkDigits[position]
             } catch (e: Exception) {
                 -1
             }
