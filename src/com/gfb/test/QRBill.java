@@ -19,9 +19,7 @@
 
 package com.gfb.test;
 
-import java.io.StringWriter;
 import java.util.ArrayList;
-import java.util.HashMap;
 
 /**
  * <h1>Swiss Payments Code Serializer</h1>
@@ -120,8 +118,8 @@ public class QRBill {
 
 
     private static final float      VERSION_SUPPORTED   = 2.00F;
-    
-    
+
+
     private static enum Data {
         NONE, QRTYPE, VERSION, CODING, ACCOUNT, AMOUNT, CURRENCY, DUEDATE, REF_TYPE, REF,
         CR_ADDTYPE, CR_NAME, CR_ADDRESS1, CR_ADDRESS2, CR_POSTCODE, CR_LOCATION, CR_COUNTRY,
@@ -178,18 +176,14 @@ public class QRBill {
     /**
      * Constructor that generates a QR Billing object, using raw QR Bill data as input.
      *
-     * Please note that this constructor and the use of the strict paramater is deprecated and
-     * will be removed in the future.
-     *
      * @param rawData String. Basic QR Bill data. Fields should be separated by new lines. An
      *                implementation guide on the format may be found at
      *                http://www.paymentstandards.ch/
      */
-    @Deprecated
     public QRBill(String rawData) {
         validateData(rawData);
     }
-    
+
     /**
      * Returns whether the current QR Bill is valid.
      *
@@ -214,16 +208,16 @@ public class QRBill {
             for (Data element : structure) {
                 switch (element) {
                     case QRTYPE:
-                        out.append(getQrType() + "\n");
+                        out.append(remNulls(getQrType()) + "\n");
                         break;
                     case VERSION:
-                        out.append(getFormattedVersion() + "\n");
+                        out.append(remNulls(getFormattedVersion()) + "\n");
                         break;
                     case CODING:
                         out.append(getCodingType() + "\n");
                         break;
                     case ACCOUNT:
-                        out.append(getIBAN() + "\n");
+                        out.append(remNulls(getIBAN()) + "\n");
                         break;
                     case AMOUNT:
                         if (getAmount() > 0)
@@ -231,7 +225,7 @@ public class QRBill {
                         out.append("\n");
                         break;
                     case CURRENCY:
-                        out.append(getCurrency() + "\n");
+                        out.append(remNulls(getCurrency()) + "\n");
                         break;
                     case DUEDATE:
                         int[] dueDate = getDueDate();
@@ -242,76 +236,76 @@ public class QRBill {
                         }
                         break;
                     case REF_TYPE:
-                        out.append(getReferenceType() + "\n");
+                        out.append(remNulls(getReferenceType()) + "\n");
                         break;
                     case REF:
-                        out.append(getReference() + "\n");
+                        out.append(remNulls(getReference()) + "\n");
                         break;
                     case CR_ADDTYPE:
-                        out.append(getActorAddressType(QRBill.ACTOR_CR) + "\n");
+                        out.append(remNulls(getActorAddressType(QRBill.ACTOR_CR)) + "\n");
                         break;
                     case CR_NAME:
-                        out.append(getActorName(QRBill.ACTOR_CR) + "\n");
+                        out.append(remNulls(getActorName(QRBill.ACTOR_CR)) + "\n");
                         break;
                     case CR_ADDRESS1:
-                        out.append(getActorStreet(QRBill.ACTOR_CR) + "\n");
+                        out.append(remNulls(getActorStreet(QRBill.ACTOR_CR)) + "\n");
                         break;
                     case CR_ADDRESS2:
-                        out.append(getActorHouseNumber(QRBill.ACTOR_CR) + "\n");
+                        out.append(remNulls(getActorHouseNumber(QRBill.ACTOR_CR)) + "\n");
                         break;
                     case CR_POSTCODE:
-                        out.append(getActorPostcode(QRBill.ACTOR_CR) + "\n");
+                        out.append(remNulls(getActorPostcode(QRBill.ACTOR_CR)) + "\n");
                         break;
                     case CR_LOCATION:
-                        out.append(getActorLocation(QRBill.ACTOR_CR) + "\n");
+                        out.append(remNulls(getActorLocation(QRBill.ACTOR_CR)) + "\n");
                         break;
                     case CR_COUNTRY:
-                        out.append(getActorCountry(QRBill.ACTOR_CR) + "\n");
+                        out.append(remNulls(getActorCountry(QRBill.ACTOR_CR)) + "\n");
                         break;
                     case UCR_ADDTYPE:
-                        out.append(getActorAddressType(QRBill.ACTOR_UCR) + "\n");
+                        out.append(remNulls(getActorAddressType(QRBill.ACTOR_UCR)) + "\n");
                         break;
                     case UCR_NAME:
-                        out.append(getActorName(QRBill.ACTOR_UCR) + "\n");
+                        out.append(remNulls(getActorName(QRBill.ACTOR_UCR)) + "\n");
                         break;
                     case UCR_ADDRESS1:
-                        out.append(getActorStreet(QRBill.ACTOR_UCR) + "\n");
+                        out.append(remNulls(getActorStreet(QRBill.ACTOR_UCR)) + "\n");
                         break;
                     case UCR_ADDRESS2:
-                        out.append(getActorHouseNumber(QRBill.ACTOR_UCR) + "\n");
+                        out.append(remNulls(getActorHouseNumber(QRBill.ACTOR_UCR)) + "\n");
                         break;
                     case UCR_POSTCODE:
-                        out.append(getActorPostcode(QRBill.ACTOR_UCR) + "\n");
+                        out.append(remNulls(getActorPostcode(QRBill.ACTOR_UCR)) + "\n");
                         break;
                     case UCR_LOCATION:
-                        out.append(getActorLocation(QRBill.ACTOR_UCR) + "\n");
+                        out.append(remNulls(getActorLocation(QRBill.ACTOR_UCR)) + "\n");
                         break;
                     case UCR_COUNTRY:
-                        out.append(getActorCountry(QRBill.ACTOR_UCR) + "\n");
+                        out.append(remNulls(getActorCountry(QRBill.ACTOR_UCR)) + "\n");
                         break;
                     case UDR_ADDTYPE:
-                        out.append(getActorAddressType(QRBill.ACTOR_UDR) + "\n");
+                        out.append(remNulls(getActorAddressType(QRBill.ACTOR_UDR)) + "\n");
                         break;
                     case UDR_NAME:
-                        out.append(getActorName(QRBill.ACTOR_UDR) + "\n");
+                        out.append(remNulls(getActorName(QRBill.ACTOR_UDR)) + "\n");
                         break;
                     case UDR_ADDRESS1:
-                        out.append(getActorStreet(QRBill.ACTOR_UDR) + "\n");
+                        out.append(remNulls(getActorStreet(QRBill.ACTOR_UDR)) + "\n");
                         break;
                     case UDR_ADDRESS2:
-                        out.append(getActorHouseNumber(QRBill.ACTOR_UDR) + "\n");
+                        out.append(remNulls(getActorHouseNumber(QRBill.ACTOR_UDR)) + "\n");
                         break;
                     case UDR_POSTCODE:
-                        out.append(getActorPostcode(QRBill.ACTOR_UDR) + "\n");
+                        out.append(remNulls(getActorPostcode(QRBill.ACTOR_UDR)) + "\n");
                         break;
                     case UDR_LOCATION:
-                        out.append(getActorLocation(QRBill.ACTOR_UDR) + "\n");
+                        out.append(remNulls(getActorLocation(QRBill.ACTOR_UDR)) + "\n");
                         break;
                     case UDR_COUNTRY:
-                        out.append(getActorCountry(QRBill.ACTOR_UDR) + "\n");
+                        out.append(remNulls(getActorCountry(QRBill.ACTOR_UDR)) + "\n");
                         break;
                     case UNSTR_MSG:
-                        out.append((getUnstructuredMsg() != null ? getUnstructuredMsg() : "") + "\n");
+                        out.append(remNulls(getUnstructuredMsg()) + "\n");
                         break;
                     case ALTSCHEMA1:
                         String[] as1 = getAlternativeSchema(-1);
@@ -322,10 +316,10 @@ public class QRBill {
                         out.append(as2[1] + "\n");
                         break;
                     case TRAILER:
-                        out.append(getTrailer() + "\n");
+                        out.append(remNulls(getTrailer()) + "\n");
                         break;
                     case BILLINFO:
-                        out.append(getBillInfo() + "\n");
+                        out.append(remNulls(getBillInfo()) + "\n");
                         break;
                 }
             }
@@ -1057,10 +1051,14 @@ public class QRBill {
         }
     }
 
+    private String remNulls (String raw) {
+        return raw == null ? "" : raw;
+    }
+
     private ArrayList<QRBillException> validateData (String rawData) {
         ArrayList<QRBillException> errors = new ArrayList<QRBillException>();
         if (rawData == null || rawData.length() == 0)
-        errors.add(new QRBillException(1, "Input data empty or null."));
+            errors.add(new QRBillException(1, "Input data empty or null."));
 
         if (rawData.length() > 997)
             errors.add(new QRBillException(2, "Input data exceeds maximum allowed limit."));
@@ -1454,57 +1452,57 @@ public class QRBill {
 
     private static class Modulo10 {
         private static final int[][] pattern = {
-        { 0, 9, 4, 6, 8, 2, 7, 1, 3, 5 },
-        { 9, 4, 6, 8, 2, 7, 1, 3, 5, 0 },
-        { 4, 6, 8, 2, 7, 1, 3, 5, 0, 9 },
-        { 6, 8, 2, 7, 1, 3, 5, 0, 9, 4 },
-        { 8, 2, 7, 1, 3, 5, 0, 9, 4, 6 },
-        { 2, 7, 1, 3, 5, 0, 9, 4, 6, 8 },
-        { 7, 1, 3, 5, 0, 9, 4, 6, 8, 2 },
-        { 1, 3, 5, 0, 9, 4, 6, 8, 2, 7 },
-        { 3, 5, 0, 9, 4, 6, 8, 2, 7, 1 },
-        { 5, 0, 9, 4, 6, 8, 2, 7, 1, 3 }
-      };
+                { 0, 9, 4, 6, 8, 2, 7, 1, 3, 5 },
+                { 9, 4, 6, 8, 2, 7, 1, 3, 5, 0 },
+                { 4, 6, 8, 2, 7, 1, 3, 5, 0, 9 },
+                { 6, 8, 2, 7, 1, 3, 5, 0, 9, 4 },
+                { 8, 2, 7, 1, 3, 5, 0, 9, 4, 6 },
+                { 2, 7, 1, 3, 5, 0, 9, 4, 6, 8 },
+                { 7, 1, 3, 5, 0, 9, 4, 6, 8, 2 },
+                { 1, 3, 5, 0, 9, 4, 6, 8, 2, 7 },
+                { 3, 5, 0, 9, 4, 6, 8, 2, 7, 1 },
+                { 5, 0, 9, 4, 6, 8, 2, 7, 1, 3 }
+        };
 
-      private static final int[] checkDigits = {
-        0, 9, 8, 7, 6, 5, 4, 3, 2, 1
-      };
-    
-      private static final int codeLength = 27;
-    
-      public static boolean validate(String input) {
-        if (input != null && input.length() > 0) {
-          input = input.replaceAll(" ", "").trim();
-        }
-    
-        if (input == null) return false;
-    
-        try {
-            int check = getCheckDigit(input);
-            String td = input.substring(input.length() - 1);
-            int endDigit = Integer.parseInt(td);
-            return endDigit == check;
-        } catch (Exception e) {
-            return false;
-        }
-      }
-    
-      public static int getCheckDigit(String input) {
-        if (input.length() < codeLength) return -1;
-    
-        String bd = input.substring(0, input.length() - 1);
-    
-        int position = 0;
-        try {
-            for (int i = 0; i < bd.length(); i++) {
-                int digit = Integer.parseInt((String) Character.toString(bd.charAt(i)));
-                position = pattern[position][digit];
+        private static final int[] checkDigits = {
+                0, 9, 8, 7, 6, 5, 4, 3, 2, 1
+        };
+
+        private static final int codeLength = 27;
+
+        public static boolean validate(String input) {
+            if (input != null && input.length() > 0) {
+                input = input.replaceAll(" ", "").trim();
             }
-            return checkDigits[position];
-        } catch (Exception e) {
-            return -1;
+
+            if (input == null) return false;
+
+            try {
+                int check = getCheckDigit(input);
+                String td = input.substring(input.length() - 1);
+                int endDigit = Integer.parseInt(td);
+                return endDigit == check;
+            } catch (Exception e) {
+                return false;
+            }
         }
-      }
+
+        public static int getCheckDigit(String input) {
+            if (input.length() < codeLength) return -1;
+
+            String bd = input.substring(0, input.length() - 1);
+
+            int position = 0;
+            try {
+                for (int i = 0; i < bd.length(); i++) {
+                    int digit = Integer.parseInt((String) Character.toString(bd.charAt(i)));
+                    position = pattern[position][digit];
+                }
+                return checkDigits[position];
+            } catch (Exception e) {
+                return -1;
+            }
+        }
     }
 
 }
