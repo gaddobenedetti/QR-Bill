@@ -29,7 +29,7 @@ public class QRBillTests {
     private static final Float      QR_VERSION      = 2.0F;
 
     @Test
-    public void shouldAnswerWithTrue() {
+    public void mainTests() {
         int start = 0;
         int end = 4;
         if (QR_INDEX > start && QR_INDEX <= end) {
