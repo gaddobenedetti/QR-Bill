@@ -2,8 +2,6 @@
 
 This <a href="https://github.com/gaddobenedetti/QR-Bill/blob/master/src/com/gfb/test/QRBill.java">QRBill class</a> was designed to be a bare bones serializer for the Swiss Payments Code, which is meant to adapt the payment system in Switzerland and Liechtenstein to the international ISO 20022 standard. For more information on this please consult the <a href="http://www.paymentstandards.ch/">PaymentStandards.ch</a> site, as the <a href="https://www.paymentstandards.ch/dam/downloads/ig-qr-bill-en.pdf">implementation guide</a> here was the basis for this class.
 
-To note on this implementation is that the above guide contained an example which includes a number of errors in the alternative schema portion of the code. As a result the Main test class will fail on initial validation due to this error and a second Correct class was created to fix it and as a demonstration of how a QR Bill object may be edited.
-
 This class was purposely written using only core Java and without any imports, so that it can more easily adapted to other languages and platforms. It is designed, not only to serialize, but also to be editable and to validate data according to the above standard.
 
 As such it does not implement <i>java.io.Serializable</i>, as is, but the implementation cab be simply added to the class.
